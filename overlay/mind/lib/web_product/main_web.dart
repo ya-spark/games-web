@@ -1,3 +1,4 @@
+// ignore_for_file: depend_on_referenced_packages
 // Web product entry for the Mind games (Ember, Presto). games-web copies this file into a checkout
 // of the app at a pinned commit and builds it with `-t lib/web_product/main_web.dart`. The app repo
 // is never changed. Nothing is saved: preferences are replaced by an in-memory store, there are no

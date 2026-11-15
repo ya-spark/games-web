@@ -13,8 +13,10 @@ Rules of the web product (owner, 2026-11-15): no coins, no shop, no purchases, n
   overlay on top, and builds the web bundle into `dist/<slug>/` (not committed). The app checkout
   is not modified.
 
-## Status
-- `ember`: builds, shows the game list with the new icons, Sudoku plays, nothing is written to
-  browser storage (checked in Chromium on 2026-11-15).
-- Not done yet: `presto`, the three Craft games, the public landing page, the ad slot, the
-  build-and-publish workflow and the hosting container.
+## Status (2026-11-15)
+- `ember` (Mind family): builds; the game list shows the new icons; Sudoku plays.
+- `scout` (Craft family): builds; year, subject and topic pickers in the teaching order of `topics.yaml`; a topic or a mixed
+  round runs the Quick quiz on an empty anonymous progress with all built-in starter packs open.
+- For both, browser `localStorage` stays empty (nothing is saved) and the console shows no errors (Chromium, 2026-11-15).
+- Not done yet: `presto`, `ranger`, `champion` (same overlays, not built or looked at yet), the minigames of the Craft apps beyond
+  the Quick quiz, the public landing page, the ad slot, the build-and-publish workflow and the hosting container.
