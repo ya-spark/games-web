@@ -22,6 +22,7 @@ import 'web_link.dart';
 import 'web_rules.dart';
 
 Future<void> main() async {
+  keepAddressAsIs();
   WidgetsFlutterBinding.ensureInitialized();
   // Progress is not saved on the web: every visit starts empty.
   SharedPreferencesStorePlatform.instance = InMemorySharedPreferencesStore.empty();

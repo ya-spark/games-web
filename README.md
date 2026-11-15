@@ -13,6 +13,16 @@ Rules of the web product (owner, 2026-11-15): no coins, no shop, no purchases, n
   overlay on top, and builds the web bundle into `dist/<slug>/` (not committed). The app checkout
   is not modified.
 
+## The landing page (`site/`)
+
+`site/index.html` is plain HTML and JavaScript (no Flutter): filters Learn / Fun, Year, Topic and Game over `catalog.json`.
+`scripts/make_catalog.py` writes `catalog.json` at deploy time from the app checkouts: one Fun card per game in a Mind
+app's `lib/ui/game_registry.dart` and one Learn card per free pack in a Craft app's `assets/content/index.json`, only for
+games with `live: true` in `games.yaml`. A card links into the game's own build: `<slug>/#/game/<id>` or
+`<slug>/#/quiz/<subject>/<year>/<topic>`. The card art in `site/art/` is the studio's own icon set (from game-factory
+`design/game_art`, original work, see its README). Every game opens with a how-to-play dialog the first time in a browser
+(`overlay/common`), and a Rules button brings it back; the only thing stored is one flag per game in the browser.
+
 ## How a commit reaches the site
 
 This repo has no workflows and no secrets (it is public). `ya-spark/game-studio` holds the deploy: when the `games-web`

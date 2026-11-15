@@ -1,3 +1,9 @@
+import 'package:flutter_web_plugins/url_strategy.dart';
+
+/// Stops Flutter from rewriting the address bar (it would turn `#/game/sudoku` into `#/` after a dialog closes, so a
+/// reload would lose the link). Call once at the start of main(), before the link is read.
+void keepAddressAsIs() => setUrlStrategy(null);
+
 // A deep link into a web build: the part after # in the address, split into segments.
 //   /games/ember/#/game/sudoku              -> ['game', 'sudoku']
 //   /games/scout/#/quiz/maths/3/money       -> ['quiz', 'maths', '3', 'money']
