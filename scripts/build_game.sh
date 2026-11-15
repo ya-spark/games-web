@@ -28,6 +28,20 @@ cp -R "$ROOT/overlay/$FAMILY/lib/." "$TMP/app/lib/"
 cd "$TMP/app"
 flutter pub get >/dev/null
 flutter build web --release --no-web-resources-cdn --base-href "$BASE_HREF" -t lib/web_product/main_web.dart
+# Craft games read their ~90 content packs one after another at start-up; over a real network that is one round trip
+# each. Start all the downloads in parallel from the page itself (the server lets the browser reuse them for a few
+# minutes), so the app's one-by-one reads come from the browser cache.
+if [ "$FAMILY" = craft ] && [ -d "$TMP/app/assets/content" ]; then
+  LIST="$(cd "$TMP/app/assets/content" && { echo index.json; echo topics.yaml; ls packs/*.json 2>/dev/null; } | sed 's/.*/"&"/' | paste -sd, -)"
+  python3 - "$TMP/app/build/web/index.html" "$LIST" <<'PY'
+import sys
+p, lst = sys.argv[1], sys.argv[2]
+s = open(p).read()
+tag = ('<script>(function(){try{[' + lst + '].forEach(function(f){fetch("assets/assets/content/"+f)})}catch(e){}})();</script>')
+assert '</head>' in s
+open(p, 'w').write(s.replace('</head>', tag + '</head>', 1))
+PY
+fi
 # build-info.json: which commits this build came from (served at <base>/build-info.json and shown on the /games/ index).
 printf '{"slug":"%s","app":"%s","appCommit":"%s","gamesWebCommit":"%s","builtAt":"%s"}\n' \
   "$SLUG" "$REPO" "$APP_SHA" "$WEB_SHA" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > build/web/build-info.json
