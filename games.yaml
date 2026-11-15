@@ -11,6 +11,7 @@ games:
     app: ya-spark/game-mind-1
     family: mind
   - slug: presto
+    live: true
     title: Mind Presto
     app: ya-spark/game-mind-9
     family: mind
@@ -20,10 +21,12 @@ games:
     app: ya-spark/game-craft-preteen
     family: craft
   - slug: ranger
+    live: true
     title: Craft Ranger
     app: ya-spark/game-craft-lowteen
     family: craft
   - slug: champion
+    live: true
     title: Craft Champion
     app: ya-spark/game-craft_highteen
     family: craft
