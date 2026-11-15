@@ -25,9 +25,15 @@ mkdir -p "$TMP/app"
 tar -C "$APP" --exclude=.git --exclude=build --exclude=.dart_tool -cf - . | tar -C "$TMP/app" -xf -
 [ -d "$ROOT/overlay/common/lib" ] && cp -R "$ROOT/overlay/common/lib/." "$TMP/app/lib/"
 cp -R "$ROOT/overlay/$FAMILY/lib/." "$TMP/app/lib/"
+[ -d "$ROOT/overlay/$FAMILY/test" ] && mkdir -p "$TMP/app/test" && cp -R "$ROOT/overlay/$FAMILY/test/." "$TMP/app/test/"
 cd "$TMP/app"
 flutter pub get >/dev/null
 flutter build web --release --no-web-resources-cdn --base-href "$BASE_HREF" -t lib/web_product/main_web.dart
+# Craft: list the app's real minigames (free or coin-locked, item types, years) for the catalog page.
+if [ "$FAMILY" = craft ] && [ -f "$TMP/app/test/web_minigames_test.dart" ]; then
+  MINIGAMES_OUT="$TMP/app/build/web/minigames.json" flutter test test/web_minigames_test.dart >/dev/null 2>&1 \
+    || echo "WARNING: could not list the minigames for $SLUG; the catalog will show Quick quiz only"
+fi
 # Craft games read their ~90 content packs one after another at start-up; over a real network that is one round trip
 # each. Start all the downloads in parallel from the page itself (the server lets the browser reuse them for a few
 # minutes), so the app's one-by-one reads come from the browser cache.
