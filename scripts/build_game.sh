@@ -23,6 +23,7 @@ WEB_SHA="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 mkdir -p "$TMP/app"
 tar -C "$APP" --exclude=.git --exclude=build --exclude=.dart_tool -cf - . | tar -C "$TMP/app" -xf -
+[ -d "$ROOT/overlay/common/lib" ] && cp -R "$ROOT/overlay/common/lib/." "$TMP/app/lib/"
 cp -R "$ROOT/overlay/$FAMILY/lib/." "$TMP/app/lib/"
 cd "$TMP/app"
 flutter pub get >/dev/null

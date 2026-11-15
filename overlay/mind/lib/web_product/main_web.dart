@@ -17,6 +17,8 @@ import '../ui/theme/app_theme.dart';
 import '../ui/theme/design_loader.dart';
 import '../ui/theme/design_scope.dart';
 import '../ui/theme/design_tokens.dart';
+import 'web_link.dart';
+import 'web_rules.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,7 +34,14 @@ Future<void> main() async {
   final design = config.designId == null
       ? null
       : await DesignBundle.load(config.designId!);
-  runApp(WebProductApp(services: services, design: design, games: appGames));
+  runApp(
+    WebProductApp(
+      services: services,
+      design: design,
+      games: appGames,
+      link: WebLink.fromUri(Uri.base),
+    ),
+  );
 }
 
 class WebProductApp extends StatelessWidget {
@@ -41,10 +50,29 @@ class WebProductApp extends StatelessWidget {
     required this.services,
     required this.design,
     required this.games,
+    required this.link,
   });
   final Services services;
   final DesignBundle? design;
   final MiniGameRegistry games;
+  final WebLink link;
+
+  /// `#/game/<id>` opens that game straight away (the catalog page links here); anything else shows the list.
+  Widget _home() {
+    final cfg = services.config;
+    if (link.kind == 'game') {
+      for (final e in games.entries) {
+        final g = e.game;
+        if (g.id == link.at(1) && g.buildStandalone != null) {
+          return RulesGate(
+            gameId: g.id,
+            child: g.buildStandalone!((_) async {}) as Widget,
+          );
+        }
+      }
+    }
+    return GameList(title: cfg.displayName, games: games);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +108,7 @@ class WebProductApp extends StatelessWidget {
                 colorOverrides: null,
                 child: child!,
               ),
-        home: GameList(title: cfg.displayName, games: games),
+        home: _home(),
       ),
     );
   }
@@ -114,7 +142,12 @@ class GameList extends StatelessWidget {
               borderRadius: BorderRadius.circular(24),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
-                  builder: (_) => g.buildStandalone!((_) async {}) as Widget,
+                  builder: (_) => Scaffold(
+                    body: RulesGate(
+                      gameId: g.id,
+                      child: g.buildStandalone!((_) async {}) as Widget,
+                    ),
+                  ),
                 ),
               ),
               child: Semantics(

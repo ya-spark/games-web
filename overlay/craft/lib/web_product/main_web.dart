@@ -18,6 +18,8 @@ import '../ui/theme/app_theme.dart';
 import '../ui/theme/design_loader.dart';
 import '../ui/theme/design_scope.dart';
 import '../ui/theme/design_tokens.dart';
+import 'web_link.dart';
+import 'web_rules.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,6 +51,7 @@ Future<void> main() async {
       packs: packs,
       open: open,
       topics: topics,
+      link: WebLink.fromUri(Uri.base),
     ),
   );
 }
@@ -61,12 +64,14 @@ class WebLearningApp extends StatefulWidget {
     required this.packs,
     required this.open,
     required this.topics,
+    required this.link,
   });
   final Services services;
   final DesignBundle? design;
   final List<LoadedPack> packs;
   final List<PoolItem> open;
   final Topics? topics;
+  final WebLink link;
 
   @override
   State<WebLearningApp> createState() => _WebLearningAppState();
@@ -75,6 +80,17 @@ class WebLearningApp extends StatefulWidget {
 class _WebLearningAppState extends State<WebLearningApp> {
   int? _year;
 
+  /// `#/quiz/<subject>/<year>/<topic>` (topic may be `all`): the catalog page links here, so the quiz starts at once.
+  _Launch? get _launch {
+    final l = widget.link;
+    if (l.kind != 'quiz') return null;
+    final y = int.tryParse(l.at(2) ?? '');
+    final subject = l.at(1);
+    if (subject == null || y == null) return null;
+    final topic = l.at(3);
+    return _Launch(subject, y, topic == null || topic == 'all' ? null : topic);
+  }
+
   List<int> get _years =>
       ({for (final p in widget.open) p.year}.toList()..sort());
 
@@ -82,7 +98,8 @@ class _WebLearningAppState extends State<WebLearningApp> {
   Widget build(BuildContext context) {
     final cfg = widget.services.config;
     final design = widget.design;
-    final year = _year ?? (_years.isEmpty ? null : _years.first);
+    final launch = _launch;
+    final year = _year ?? launch?.year ?? (_years.isEmpty ? null : _years.first);
     final mode = design?.app.resolveMode(DesignMode.study);
     final level = design?.app.levelForYear(year);
     final theme = design != null
@@ -124,6 +141,7 @@ class _WebLearningAppState extends State<WebLearningApp> {
           years: _years,
           year: year,
           onYear: (y) => setState(() => _year = y),
+          launch: launch,
         ),
       ),
     );
@@ -142,7 +160,9 @@ class TopicPicker extends StatefulWidget {
     required this.years,
     required this.year,
     required this.onYear,
+    this.launch,
   });
+  final _Launch? launch;
   final String title;
   final Services services;
   final List<LoadedPack> packs;
@@ -158,6 +178,18 @@ class TopicPicker extends StatefulWidget {
 
 class _TopicPickerState extends State<TopicPicker> {
   String _subject = 'maths';
+
+  @override
+  void initState() {
+    super.initState();
+    final l = widget.launch;
+    if (l != null) {
+      _subject = l.subject;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _play(l.subject, l.year, l.topic);
+      });
+    }
+  }
 
   List<String> get _subjects =>
       ({for (final p in widget.open) p.subject}.toList()..sort());
@@ -193,16 +225,21 @@ class _TopicPickerState extends State<TopicPicker> {
     final nav = Navigator.of(context);
     nav.push(
       MaterialPageRoute<void>(
-        builder: (_) => quickQuizGame.build(
-          MiniGameContext(
-            session: session,
-            mode: MiniGameMode.study,
-            onAnswered: (r, sess) {},
-            onExit: () {
-              if (nav.mounted) nav.pop();
-            },
+        builder: (_) => Scaffold(
+          body: RulesGate(
+            gameId: 'quick_quiz',
+            child: quickQuizGame.build(
+              MiniGameContext(
+                session: session,
+                mode: MiniGameMode.study,
+                onAnswered: (r, sess) {},
+                onExit: () {
+                  if (nav.mounted) nav.pop();
+                },
+              ),
+            ) as Widget,
           ),
-        ) as Widget,
+        ),
       ),
     );
   }
@@ -278,4 +315,12 @@ class _TopicPickerState extends State<TopicPicker> {
       ),
     );
   }
+}
+
+/// A quiz the address asks for (see `_WebLearningAppState._launch`).
+class _Launch {
+  const _Launch(this.subject, this.year, this.topic);
+  final String subject;
+  final int year;
+  final String? topic;
 }
