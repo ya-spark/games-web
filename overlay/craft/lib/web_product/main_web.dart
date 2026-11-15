@@ -13,6 +13,7 @@ import '../core/config/app_config.dart';
 import '../core/config/products.dart';
 import '../core/services.dart';
 import '../engine/engine.dart';
+import '../ui/game_registry.dart';
 import '../ui/quick_quiz_screen.dart';
 import '../ui/theme/app_theme.dart';
 import '../ui/theme/design_loader.dart';
@@ -81,15 +82,22 @@ class WebLearningApp extends StatefulWidget {
 class _WebLearningAppState extends State<WebLearningApp> {
   int? _year;
 
-  /// `#/quiz/<subject>/<year>/<topic>` (topic may be `all`): the catalog page links here, so the quiz starts at once.
+  /// `#/quiz/<subject>/<year>/<topic>` (topic may be `all`) starts the Quick quiz; `#/play/<game>/<subject>/<year>/<topic>`
+  /// starts one of the free minigames. The catalog page links here, so the game starts at once.
   _Launch? get _launch {
     final l = widget.link;
-    if (l.kind != 'quiz') return null;
-    final y = int.tryParse(l.at(2) ?? '');
-    final subject = l.at(1);
+    if (l.kind != 'quiz' && l.kind != 'play') return null;
+    final o = l.kind == 'play' ? 1 : 0;
+    final y = int.tryParse(l.at(2 + o) ?? '');
+    final subject = l.at(1 + o);
     if (subject == null || y == null) return null;
-    final topic = l.at(3);
-    return _Launch(subject, y, topic == null || topic == 'all' ? null : topic);
+    final topic = l.at(3 + o);
+    return _Launch(
+      subject,
+      y,
+      topic == null || topic == 'all' ? null : topic,
+      gameId: l.kind == 'play' ? l.at(1) : null,
+    );
   }
 
   List<int> get _years =>
@@ -187,7 +195,7 @@ class _TopicPickerState extends State<TopicPicker> {
     if (l != null) {
       _subject = l.subject;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _play(l.subject, l.year, l.topic);
+        if (mounted) _play(l.subject, l.year, l.topic, gameId: l.gameId);
       });
     }
   }
@@ -207,7 +215,18 @@ class _TopicPickerState extends State<TopicPicker> {
     ];
   }
 
-  void _play(String subject, int year, String? topic) {
+  /// The free minigame with this id, or the Quick quiz. A coin-locked game is never played on the web.
+  MiniGame _gameFor(String? id) {
+    if (id == null || id == quickQuizGame.id) return quickQuizGame;
+    for (final e in appGames.entries) {
+      if (e.game.id == id && e.game.access != GameAccess.coins) return e.game;
+    }
+    return quickQuizGame;
+  }
+
+  void _play(String subject, int year, String? topic, {String? gameId}) {
+    final game = _gameFor(gameId);
+    final isQuiz = game.id == quickQuizGame.id;
     final session = QuizSession.start(
       open: widget.open,
       progress: const ChildProgress(),
@@ -217,10 +236,10 @@ class _TopicPickerState extends State<TopicPicker> {
       year: year,
       today: 0,
       random: Random(),
-      types: quickQuizGame.itemTypes,
+      types: game.itemTypes,
       topic: topic,
-      minPool: 1,
-      gameId: quickQuizGame.id,
+      minPool: isQuiz ? 1 : game.minPool,
+      gameId: game.id,
     );
     if (session == null) return;
     final nav = Navigator.of(context);
@@ -228,11 +247,11 @@ class _TopicPickerState extends State<TopicPicker> {
       MaterialPageRoute<void>(
         builder: (_) => Scaffold(
           body: RulesGate(
-            gameId: 'quick_quiz',
-            child: quickQuizGame.build(
+            gameId: game.id,
+            child: game.build(
               MiniGameContext(
                 session: session,
-                mode: MiniGameMode.study,
+                mode: isQuiz ? MiniGameMode.study : MiniGameMode.game,
                 onAnswered: (r, sess) {},
                 onExit: () {
                   if (nav.mounted) nav.pop();
@@ -320,7 +339,8 @@ class _TopicPickerState extends State<TopicPicker> {
 
 /// A quiz the address asks for (see `_WebLearningAppState._launch`).
 class _Launch {
-  const _Launch(this.subject, this.year, this.topic);
+  const _Launch(this.subject, this.year, this.topic, {this.gameId});
+  final String? gameId;
   final String subject;
   final int year;
   final String? topic;

@@ -122,6 +122,72 @@ const Map<String, GameRules> webRules = {
     'There is no double jump.',
     'Wait for the right moment instead of jumping early.',
   ]),
+  'memory_match': GameRules('Memory match', [
+    'Flip two cards at a time to find the matching pairs. Each pair is a question and its answer.',
+    'Match every pair to finish the board.',
+  ], [
+    'Try to remember where each card is.',
+    'Younger levels have no timer. Older levels add a gentle clock.',
+  ]),
+  'sort_bins': GameRules('Sort into bins', [
+    'Put each item into the right bin. Drag it there, or tap the item and then the bin.',
+    'A wrong drop never ends the round. The item stays and you try again.',
+  ], [
+    'Read the names of the bins first.',
+    'Take your time. Every item gets as many tries as it needs.',
+  ]),
+  'series_builder': GameRules('Series builder', [
+    'Put the steps in the right order by tapping the tiles one after the other.',
+    'A wrong tile is greyed out and you try again.',
+  ], [
+    'Find the first step before you start tapping.',
+    'Older levels add a gentle timer.',
+  ]),
+  'word_builder': GameRules('Word builder', [
+    'Build the answer from the letter tiles. Use the hint if you need it.',
+    'After a miss, the correct spelling is shown.',
+  ], [
+    'Say the word to yourself as you build it.',
+    'Older levels build the word and press Check.',
+  ]),
+  'true_false': GameRules('True or false', [
+    'Read each statement, then choose True or False.',
+  ], [
+    'Read the whole statement before you answer.',
+    'Look for words like always, never and only.',
+  ]),
+  'cloze_fix': GameRules('Cloze and grammar fix', [
+    'Choose the word that fills the gap, or the corrected sentence.',
+  ], [
+    'Read the sentence out loud in your head with each choice.',
+    'Check the whole sentence, not just the gap.',
+  ]),
+  'equation_builder': GameRules('Equation builder', [
+    'Build a sum from the tiles so that it equals the target number.',
+    'Any sum that works is a right answer.',
+  ], [
+    'Start with the biggest tile that fits.',
+    'Try different tiles if you get stuck.',
+  ]),
+  'word_grid': GameRules('Word search and crossword', [
+    'Choose word search or crossword on the start screen.',
+    'Find the words in the grid, or fill in the crossword from the clues.',
+  ], [
+    'Start with the words you know best.',
+    'There is no need to hurry.',
+  ]),
+  'balloon_pop': GameRules('Balloon pop', [
+    'Read the question, then pop the balloon with the right answer.',
+  ], [
+    'Read every balloon before you pop one.',
+    'Take a moment if the question is tricky.',
+  ]),
+  'door_runner': GameRules('Door runner', [
+    'Read the question, then run through the door with the right answer.',
+  ], [
+    'Read every door before you choose.',
+    'Take a moment if the question is tricky.',
+  ]),
   'quick_quiz': GameRules('Quick quiz', [
     'Answer the questions one by one.',
     'Pick a topic to practise one thing, or play a mixed round.',

@@ -9,6 +9,10 @@
 - Craft games (family craft): one Learn card per free pack in the app's assets/content/index.json
   (the built-in starter packs; a pack with a product_id is for sale and is not on the web).
   Link: <slug>/#/quiz/<subject>/<year>/<topic>. Order inside a year follows assets/content/topics.yaml.
+- Craft minigames: when `--dist <dir>` is given and `<dir>/<slug>/minigames.json` exists (written by build_game.sh from the
+  app's real registry), one extra Learn card per free minigame (not coin-locked, Game mode) and per topic that has
+  enough items of the types the game plays and falls inside the game's years. Link:
+  <slug>/#/play/<gameId>/<subject>/<year>/<topic>. The page shows these only when that game is picked in the Game filter.
 - Nothing here needs a network; the app checkouts are only read.
 """
 import argparse
@@ -68,7 +72,34 @@ def mind_cards(game, app_dir):
     return cards
 
 
-def craft_cards(game, app_dir):
+def minigame_cards(game, app_dir, packs, mini):
+    cards = []
+    free = [g for g in mini.get("games", [])
+            if g["id"] != "quick_quiz" and g.get("access") != "coins" and "game" in g.get("modes", [])]
+    for p in packs:
+        try:
+            items = json.loads((app_dir / "assets/content" / p["file"]["path"]).read_text())["items"]
+        except (OSError, KeyError, ValueError):
+            continue
+        counts = {}
+        for it in items:
+            counts[it.get("type")] = counts.get(it.get("type"), 0) + 1
+        for g in free:
+            if not g["minYear"] <= p["year"] <= g["maxYear"]:
+                continue
+            if sum(counts.get(t, 0) for t in g["itemTypes"]) < g["minPool"]:
+                continue
+            cards.append({
+                "kind": "learn", "id": f"{game['slug']}:{g['id']}:{p['subject']}:{p['year']}:{p['topic']}",
+                "title": p["title"], "subject": p["subject"], "year": p["year"], "topic": p["topic"],
+                "items": p.get("items", 0), "game": g["title"], "gameId": g["id"],
+                "slug": game["slug"], "from": game.get("title", game["slug"]), "art": g["id"],
+                "link": f"{game['slug']}/#/play/{g['id']}/{p['subject']}/{p['year']}/{p['topic']}",
+            })
+    return cards
+
+
+def craft_cards(game, app_dir, dist=None):
     index = json.loads((app_dir / "assets/content/index.json").read_text())
     order = topic_order(app_dir / "assets/content/topics.yaml")
     packs = [p for p in index.get("packs", []) if not p.get("product_id") and p.get("status", "live") == "live"]
@@ -87,6 +118,9 @@ def craft_cards(game, app_dir):
             "slug": game["slug"], "from": game.get("title", game["slug"]), "art": "quick_quiz",
             "link": f"{game['slug']}/#/quiz/{p['subject']}/{p['year']}/{p['topic']}",
         })
+    mini_file = Path(dist) / game["slug"] / "minigames.json" if dist else None
+    if mini_file and mini_file.exists():
+        cards += minigame_cards(game, app_dir, sorted(packs, key=sort_key), json.loads(mini_file.read_text()))
     return cards
 
 
@@ -94,6 +128,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--apps", required=True, help="folder with the app checkouts, named like the repos")
     ap.add_argument("--games", default=str(Path(__file__).resolve().parent.parent / "games.yaml"))
+    ap.add_argument("--dist", help="folder with the built games (<slug>/minigames.json), for the Craft minigame cards")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     cards = []
@@ -104,7 +139,7 @@ def main():
         if not app_dir.is_dir():
             sys.exit(f"no checkout for {g['slug']} at {app_dir}")
         fam = g.get("family")
-        cards += mind_cards(g, app_dir) if fam == "mind" else craft_cards(g, app_dir)
+        cards += mind_cards(g, app_dir) if fam == "mind" else craft_cards(g, app_dir, a.dist)
     out = {"generatedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "cards": cards}
     Path(a.out).parent.mkdir(parents=True, exist_ok=True)
     Path(a.out).write_text(json.dumps(out, indent=1) + "\n")

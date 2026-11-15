@@ -147,12 +147,16 @@
     var groups = Object.keys(bySubject).sort().map(function (s) { return { group: cap(s), options: bySubject[s] }; });
     fillSelect($('topic'), groups, 'Any topic', state.topic);
     if (!state.topic) { /* keep */ } else if ($('topic').value !== state.topic) { state.topic = ''; }
-    var games = [];
-    if (learn.length) games.push({ label: 'Quick quiz', value: 'quick_quiz' });
-    var funSeen = {};
-    cards.filter(function (c) { return c.kind === 'fun'; }).forEach(function (c) {
-      if (!funSeen[c.gameId]) { funSeen[c.gameId] = 1; games.push({ label: c.title, value: c.gameId }); }
+    var games = [], seenG = {};
+    // Quick quiz first, then the other Learn games, then the Fun games, each once.
+    cards.filter(function (c) { return c.kind === 'learn' && c.gameId === 'quick_quiz'; }).slice(0, 1).forEach(function (c) { seenG[c.gameId] = 1; games.push({ label: c.game, value: c.gameId }); });
+    var others = [];
+    cards.forEach(function (c) {
+      if (seenG[c.gameId]) return; seenG[c.gameId] = 1;
+      others.push({ label: c.kind === 'learn' ? c.game : c.title, value: c.gameId, kind: c.kind });
     });
+    others.sort(function (a, b) { return (a.kind === b.kind ? 0 : a.kind === 'learn' ? -1 : 1) || a.label.localeCompare(b.label); });
+    games = games.concat(others);
     fillSelect($('game'), games, 'Any game', state.game);
   }
 
@@ -160,6 +164,8 @@
     if (state.type !== 'all' && c.kind !== state.type) return false;
     if (state.game && c.gameId !== state.game) return false;
     if (c.kind === 'fun') return !state.year && !state.topic;      // fun games have no year or topic
+    // The other Learn games (minigames) only show when picked in the Game filter; the default is one Quick quiz per topic.
+    if (c.gameId !== 'quick_quiz' && state.game !== c.gameId) return false;
     if (state.year && String(c.year) !== state.year) return false;
     if (state.topic && (c.subject + '|' + c.topic) !== state.topic) return false;
     return true;
