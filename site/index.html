@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Active Mind Craft games</title>
+<meta name="description" content="Free games to learn and to play: maths and English practice for every year, and calm puzzle and arcade games.">
+<style>
+  :root {
+    --bg: #f6f7fb; --surface: #ffffff; --ink: #1c2333; --muted: #5a6478; --line: #dde1ec;
+    --accent: #1b6fd8; --accent-ink: #ffffff; --fun: #b4491a; --learn: #0f7a5c; --focus: #ff9f1c;
+    --radius: 16px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #11151f; --surface: #1a2030; --ink: #eef1f8; --muted: #a2adc2; --line: #2b3348;
+      --accent: #6aa5ff; --accent-ink: #0b1220; --fun: #ffa66b; --learn: #5fd3ae;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #11151f; --surface: #1a2030; --ink: #eef1f8; --muted: #a2adc2; --line: #2b3348;
+    --accent: #6aa5ff; --accent-ink: #0b1220; --fun: #ffa66b; --learn: #5fd3ae;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  a { color: inherit; }
+  header, main, footer { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+  header { padding-top: 28px; padding-bottom: 8px; }
+  h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 0 0 6px; letter-spacing: -0.01em; }
+  header p { margin: 0; color: var(--muted); max-width: 60ch; }
+  .filters { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 14px 16px 12px;
+    max-width: none; border-bottom: 1px solid var(--line); }
+  .filters-in { max-width: 1048px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end; }
+  fieldset { border: 0; margin: 0; padding: 0; }
+  legend, label.lab { display: block; font-size: .78rem; color: var(--muted); margin-bottom: 4px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .04em; padding: 0; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--surface); }
+  .seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .seg label { padding: 10px 16px; min-height: 44px; display: inline-flex; align-items: center; cursor: pointer; font-weight: 600; }
+  .seg input:checked + label { background: var(--accent); color: var(--accent-ink); }
+  .seg input:focus-visible + label { outline: 3px solid var(--focus); outline-offset: -3px; }
+  select, button.clear { min-height: 44px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--surface); color: var(--ink); font: inherit; max-width: 100%; }
+  select:disabled { opacity: .5; }
+  button.clear { cursor: pointer; font-weight: 600; }
+  select:focus-visible, button:focus-visible, a.card:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .count { margin: 16px 0 4px; color: var(--muted); }
+  h2 { font-size: 1.15rem; margin: 22px 0 10px; }
+  .grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  a.card { display: flex; gap: 12px; align-items: center; text-decoration: none; background: var(--surface);
+    border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; min-height: 84px; height: 100%; }
+  a.card:hover { border-color: var(--accent); }
+  .art { width: 56px; height: 56px; flex: none; border-radius: 12px; background: var(--bg); object-fit: contain; padding: 4px; }
+  .card b { display: block; line-height: 1.2; }
+  .meta { display: block; font-size: .85rem; color: var(--muted); margin-top: 2px; }
+  .tag { font-weight: 700; }
+  .tag.fun { color: var(--fun); } .tag.learn { color: var(--learn); }
+  .empty { padding: 28px; text-align: center; background: var(--surface); border: 1px dashed var(--line);
+    border-radius: var(--radius); margin-top: 18px; }
+  footer { padding-top: 28px; padding-bottom: 40px; color: var(--muted); font-size: .9rem; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Games to learn and play</h1>
+  <p>Pick Learn for maths and English practice, or Fun for calm puzzles and arcade games. Choose a year, a topic or a game to narrow the list.</p>
+</header>
+
+<div class="filters" role="search">
+  <div class="filters-in">
+    <fieldset>
+      <legend>Type</legend>
+      <div class="seg" id="type">
+        <input type="radio" name="type" id="t-all" value="all" checked><label for="t-all">All</label>
+        <input type="radio" name="type" id="t-learn" value="learn"><label for="t-learn">Learn</label>
+        <input type="radio" name="type" id="t-fun" value="fun"><label for="t-fun">Fun</label>
+      </div>
+    </fieldset>
+    <div><label class="lab" for="year">Year</label><select id="year"><option value="">Any year</option></select></div>
+    <div><label class="lab" for="topic">Topic</label><select id="topic"><option value="">Any topic</option></select></div>
+    <div><label class="lab" for="game">Game</label><select id="game"><option value="">Any game</option></select></div>
+    <button class="clear" id="clear" type="button">Clear filters</button>
+  </div>
+</div>
+
+<main>
+  <noscript><p class="empty">This page needs JavaScript to list the games.</p></noscript>
+  <p class="count" id="count" role="status" aria-live="polite"></p>
+  <div id="results"></div>
+</main>
+
+<footer>
+  <p>Nothing is saved on this website: your progress is not kept when you close the page. Each game shows how to play the first time you open it, and the Rules button brings it back.</p>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+  var cards = [], state = { type: 'all', year: '', topic: '', game: '' };
+  var $ = function (id) { return document.getElementById(id); };
+  var yearName = function (y) { return y === 0 ? 'Foundation' : 'Year ' + y; };
+  var cap = function (s) { return s.charAt(0).toUpperCase() + s.slice(1); };
+  var el = function (tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+
+  function readUrl() {
+    var q = new URLSearchParams(location.search);
+    ['type', 'year', 'topic', 'game'].forEach(function (k) { if (q.has(k)) state[k] = q.get(k); });
+    if (['all', 'learn', 'fun'].indexOf(state.type) < 0) state.type = 'all';
+  }
+  function writeUrl() {
+    var q = new URLSearchParams();
+    if (state.type !== 'all') q.set('type', state.type);
+    ['year', 'topic', 'game'].forEach(function (k) { if (state[k]) q.set(k, state[k]); });
+    var s = q.toString();
+    try { history.replaceState(null, '', location.pathname + (s ? '?' + s : '')); } catch (e) { /* ignore */ }
+  }
+
+  function fillSelect(sel, items, anyLabel, value) {
+    sel.textContent = '';
+    sel.appendChild(new Option(anyLabel, ''));
+    items.forEach(function (it) {
+      if (it.group) {
+        var g = document.createElement('optgroup'); g.label = it.group;
+        it.options.forEach(function (o) { g.appendChild(new Option(o.label, o.value)); });
+        sel.appendChild(g);
+      } else { sel.appendChild(new Option(it.label, it.value)); }
+    });
+    sel.value = value;
+    if (sel.value !== value) { sel.value = ''; }
+  }
+
+  function buildSelects() {
+    var learn = cards.filter(function (c) { return c.kind === 'learn'; });
+    var years = Array.from(new Set(learn.map(function (c) { return c.year; }))).sort(function (a, b) { return a - b; });
+    fillSelect($('year'), years.map(function (y) { return { label: yearName(y), value: String(y) }; }), 'Any year', state.year);
+    // Topics: those of the chosen year, otherwise every topic (a topic name can appear in several years).
+    var pool = learn.filter(function (c) { return !state.year || String(c.year) === state.year; });
+    var seen = {}, bySubject = {};
+    pool.forEach(function (c) {
+      var key = c.subject + '|' + c.topic;
+      if (seen[key]) return; seen[key] = 1;
+      (bySubject[c.subject] = bySubject[c.subject] || []).push({ label: c.title, value: key });
+    });
+    var groups = Object.keys(bySubject).sort().map(function (s) { return { group: cap(s), options: bySubject[s] }; });
+    fillSelect($('topic'), groups, 'Any topic', state.topic);
+    if (!state.topic) { /* keep */ } else if ($('topic').value !== state.topic) { state.topic = ''; }
+    var games = [];
+    if (learn.length) games.push({ label: 'Quick quiz', value: 'quick_quiz' });
+    var funSeen = {};
+    cards.filter(function (c) { return c.kind === 'fun'; }).forEach(function (c) {
+      if (!funSeen[c.gameId]) { funSeen[c.gameId] = 1; games.push({ label: c.title, value: c.gameId }); }
+    });
+    fillSelect($('game'), games, 'Any game', state.game);
+  }
+
+  function matches(c) {
+    if (state.type !== 'all' && c.kind !== state.type) return false;
+    if (state.game && c.gameId !== state.game) return false;
+    if (c.kind === 'fun') return !state.year && !state.topic;      // fun games have no year or topic
+    if (state.year && String(c.year) !== state.year) return false;
+    if (state.topic && (c.subject + '|' + c.topic) !== state.topic) return false;
+    return true;
+  }
+
+  function card(c) {
+    var li = el('li'), a = el('a', 'card'); a.href = c.link;
+    var img = el('img', 'art'); img.src = '_site/art/' + c.art + '.svg'; img.alt = ''; img.width = 56; img.height = 56; img.loading = 'lazy';
+    var box = el('span');
+    box.appendChild(el('b', null, c.title));
+    var meta = el('span', 'meta');
+    if (c.kind === 'learn') {
+      var t = el('span', 'tag learn', 'Learn'); meta.appendChild(t);
+      meta.appendChild(document.createTextNode(' · ' + cap(c.subject) + ' · ' + yearName(c.year) + ' · ' + c.game));
+    } else {
+      meta.appendChild(el('span', 'tag fun', 'Fun'));
+      meta.appendChild(document.createTextNode(' · from ' + c.from));
+    }
+    box.appendChild(meta); a.appendChild(img); a.appendChild(box); li.appendChild(a);
+    a.setAttribute('aria-label', c.kind === 'learn'
+      ? 'Learn: ' + c.title + ', ' + cap(c.subject) + ', ' + yearName(c.year) + ', ' + c.game
+      : 'Fun game: ' + c.title);
+    return li;
+  }
+
+  function section(title, list) {
+    var wrap = el('section');
+    if (title) wrap.appendChild(el('h2', null, title));
+    var ul = el('ul', 'grid'); list.forEach(function (c) { ul.appendChild(card(c)); });
+    wrap.appendChild(ul); return wrap;
+  }
+
+  function render() {
+    var yearOn = state.type !== 'fun', funOnly = state.type === 'fun';
+    $('year').disabled = funOnly; $('topic').disabled = funOnly;
+    if (funOnly) { state.year = ''; state.topic = ''; }
+    buildSelects();
+    $('year').disabled = funOnly; $('topic').disabled = funOnly;
+    var shown = cards.filter(matches);
+    var fun = shown.filter(function (c) { return c.kind === 'fun'; });
+    var learn = shown.filter(function (c) { return c.kind === 'learn'; });
+    var res = $('results'); res.textContent = '';
+    if (!shown.length) {
+      var e = el('div', 'empty'); e.appendChild(el('p', null, 'No games match these choices yet.'));
+      var b = el('button', 'clear', 'Clear filters'); b.type = 'button'; b.addEventListener('click', clearAll); e.appendChild(b);
+      res.appendChild(e);
+    } else {
+      var both = fun.length && learn.length;
+      if (fun.length) res.appendChild(section(both ? 'Fun games' : '', fun));
+      if (learn.length) res.appendChild(section(both ? 'Learn' : '', learn));
+    }
+    $('count').textContent = shown.length + (shown.length === 1 ? ' game' : ' games');
+    document.getElementById(state.type === 'all' ? 't-all' : state.type === 'learn' ? 't-learn' : 't-fun').checked = true;
+    void yearOn; writeUrl();
+  }
+
+  function clearAll() { state = { type: 'all', year: '', topic: '', game: '' }; render(); }
+
+  function wire() {
+    document.querySelectorAll('input[name=type]').forEach(function (r) {
+      r.addEventListener('change', function () { state.type = r.value; render(); });
+    });
+    $('year').addEventListener('change', function () { state.year = this.value; state.topic = ''; render(); });
+    $('topic').addEventListener('change', function () { state.topic = this.value; render(); });
+    $('game').addEventListener('change', function () { state.game = this.value; render(); });
+    $('clear').addEventListener('click', clearAll);
+  }
+
+  readUrl(); wire();
+  fetch('catalog.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (d) {
+    cards = d.cards || []; render();
+  }).catch(function () {
+    $('results').appendChild(el('p', 'empty', 'The game list could not be loaded. Please try again.'));
+  });
+})();
+</script>
+</body>
+</html>

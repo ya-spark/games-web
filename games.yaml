@@ -1,10 +1,12 @@
 # The web versions of the games: one entry per game. The public URL is /games/<slug>/ and the folder is
 # games/<slug>/. `app` is the repo the game's code comes from, `ref` the pinned commit (filled in by the
 # build workflow), `family` picks the overlay under overlay/. Slugs are provisional until the owner's
-# name checks pass; renaming one is a change in this file only. Repo names follow the audience (owner, 2026-11-15):
+# name checks pass; renaming one is a change in this file only. `live: true` = the game has a build on the site and
+# is listed on the catalog page; set it when a game is first deployed by hand. Repo names follow the audience (owner, 2026-11-15):
 # scout (Years 0-6) is in game-craft-preteen, ranger (Years 7-10) in game-craft-lowteen.
 games:
   - slug: ember
+    live: true
     title: Mind Ember
     app: ya-spark/game-mind-1
     family: mind
@@ -13,6 +15,7 @@ games:
     app: ya-spark/game-mind-9
     family: mind
   - slug: scout
+    live: true
     title: Craft Scout
     app: ya-spark/game-craft-preteen
     family: craft
