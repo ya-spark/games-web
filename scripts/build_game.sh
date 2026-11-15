@@ -27,8 +27,8 @@ cp -R "$ROOT/overlay/$FAMILY/lib/." "$TMP/app/lib/"
 cd "$TMP/app"
 flutter pub get >/dev/null
 flutter build web --release --no-web-resources-cdn --base-href "$BASE_HREF" -t lib/web_product/main_web.dart
-# version.json: which commits this build came from (served at <base>/version.json and shown on the /games/ index).
+# build-info.json: which commits this build came from (served at <base>/build-info.json and shown on the /games/ index).
 printf '{"slug":"%s","app":"%s","appCommit":"%s","gamesWebCommit":"%s","builtAt":"%s"}\n' \
-  "$SLUG" "$REPO" "$APP_SHA" "$WEB_SHA" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > build/web/version.json
+  "$SLUG" "$REPO" "$APP_SHA" "$WEB_SHA" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > build/web/build-info.json
 rm -rf "$OUT"; mkdir -p "$(dirname "$OUT")"; cp -R build/web "$OUT"
 echo "Built $SLUG into $OUT"
