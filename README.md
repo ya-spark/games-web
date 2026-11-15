@@ -13,6 +13,13 @@ Rules of the web product (owner, 2026-11-15): no coins, no shop, no purchases, n
   overlay on top, and builds the web bundle into `dist/<slug>/` (not committed). The app checkout
   is not modified.
 
+## How a commit reaches the site
+
+This repo has no workflows and no secrets (it is public). `ya-spark/game-studio` holds the deploy: when the `games-web`
+pin, or the pin of a web game's app repo, moves on its `main`, the `deploy-games-web` workflow there rebuilds every live
+game that is behind (it compares each game's `build-info.json` on the site with `main`) and swaps it into the
+`games-web` container on the VPS. Each game's `build-info.json` and the index at `/games/` show the commits that are running.
+
 ## Status (2026-11-15)
 - `ember` (Mind family): builds; the game list shows the new icons; Sudoku plays.
 - `scout` (Craft family): builds; year, subject and topic pickers in the teaching order of `topics.yaml`; a topic or a mixed
