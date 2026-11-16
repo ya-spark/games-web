@@ -23,6 +23,10 @@ games with `live: true` in `games.yaml`. A card links into the game's own build:
 `design/game_art`, original work, see its README). Every game opens with a how-to-play dialog the first time in a browser
 (`overlay/common`), and a Rules button brings it back; the only thing stored is one flag per game in the browser.
 
+## How-to-play text
+
+The text of every game's how-to-play dialog is the apps' own: `scripts/sync_rules.py --apps <folder with the app checkouts>` reads each app's catalogue (`lib/core/rules/game_rules.dart` in the Mind hubs, `lib/engine/minigames/how_to_play_catalogue.dart` in the Craft apps) and writes `overlay/common/lib/web_product/web_rules_data.dart`. Run it after an app's text changes and commit the generated file; never edit that file by hand.
+
 ## How a commit reaches the site
 
 This repo has no workflows and no secrets (it is public). `ya-spark/game-studio` holds the deploy: when the `games-web`
