@@ -4,242 +4,886 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Active Mind Craft games</title>
-<meta name="description" content="Free games to learn and to play: maths and English practice for every year, and calm puzzle and arcade games.">
+<meta name="description" content="Free games to play, and maths and English practice for every year. Open a game and start in one click.">
+<script>
+/* Apply a remembered theme choice before first paint (no flash). */
+try { var t = localStorage.getItem('amc.theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) { /* storage blocked: follow the system */ }
+</script>
 <style>
   :root {
-    --bg: #f6f7fb; --surface: #ffffff; --ink: #1c2333; --muted: #5a6478; --line: #dde1ec;
-    --accent: #1b6fd8; --accent-ink: #ffffff; --fun: #b4491a; --learn: #0f7a5c; --focus: #ff9f1c;
-    --radius: 16px;
+    --bg: #F4F6FC; --surface: #FFFFFF; --surface-2: #E9EDF8; --line: #C3CBE0; --ink: #151B2E; --muted: #4A5470;
+    --accent: #1D5FD1; --accent-ink: #FFFFFF; --focus: #12388F;
+    --shadow: 0 4px 14px rgba(21,27,46,.12); --shadow-up: 0 8px 22px rgba(21,27,46,.18);
+    --art-shadow: 0 6px 14px rgba(0,0,0,.15);
+    --hero: radial-gradient(900px 400px at 20% -10%, #D6E4FF 0, rgba(0,0,0,0) 70%);
+    --bar: #101A44; --bar-ink: #FFFFFF; --bar-focus: #FFC24D; --bar-field: #FFFFFF; --bar-field-line: #7C8FD6;
+    --tip-bg: #151B2E; --tip-ink: #F4F6FC; --on-fill: #101A44; --pill-bg: rgba(16,26,68,.92);
+    --bar-sep: 0 2px 10px rgba(16,26,68,.28); --bar-border: 0 solid rgba(0,0,0,0);
+    --bar-h: 108px;
+    --tw: 160px; --gap: 12px; --gut: 16px;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #11151f; --surface: #1a2030; --ink: #eef1f8; --muted: #a2adc2; --line: #2b3348;
-      --accent: #6aa5ff; --accent-ink: #0b1220; --fun: #ffa66b; --learn: #5fd3ae;
+      --bg: #0B1020; --surface: #151C33; --surface-2: #1E2745; --line: #35416A; --ink: #EEF2FF; --muted: #A9B4D0;
+      --accent: #7AB2FF; --accent-ink: #0B1020; --focus: #FFC24D;
+      --shadow: 0 6px 18px rgba(0,0,0,.35); --shadow-up: 0 10px 26px rgba(0,0,0,.5);
+      --art-shadow: 0 6px 14px rgba(0,0,0,.25);
+      --hero: radial-gradient(900px 400px at 20% -10%, #25346B 0, rgba(0,0,0,0) 70%);
+      --bar-field: #1E2745; --tip-bg: #EEF2FF; --tip-ink: #0B1020;
+      --bar-sep: none; --bar-border: 1px solid #35416A;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #11151f; --surface: #1a2030; --ink: #eef1f8; --muted: #a2adc2; --line: #2b3348;
-    --accent: #6aa5ff; --accent-ink: #0b1220; --fun: #ffa66b; --learn: #5fd3ae;
+    --bg: #0B1020; --surface: #151C33; --surface-2: #1E2745; --line: #35416A; --ink: #EEF2FF; --muted: #A9B4D0;
+    --accent: #7AB2FF; --accent-ink: #0B1020; --focus: #FFC24D;
+    --shadow: 0 6px 18px rgba(0,0,0,.35); --shadow-up: 0 10px 26px rgba(0,0,0,.5);
+    --art-shadow: 0 6px 14px rgba(0,0,0,.25);
+    --hero: radial-gradient(900px 400px at 20% -10%, #25346B 0, rgba(0,0,0,0) 70%);
+    --bar-field: #1E2745; --tip-bg: #EEF2FF; --tip-ink: #0B1020;
+    --bar-sep: none; --bar-border: 1px solid #35416A;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink);
-    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  [hidden] { display: none !important; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--bar-h) + 12px); }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow-x: hidden; }
   a { color: inherit; }
-  header, main, footer { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
-  header { padding-top: 28px; padding-bottom: 8px; }
-  h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 0 0 6px; letter-spacing: -0.01em; }
-  header p { margin: 0; color: var(--muted); max-width: 60ch; }
-  .filters { background: var(--bg); padding: 14px 16px 12px; max-width: none; border-bottom: 1px solid var(--line); }
-  @media (min-width: 720px) { .filters { position: sticky; top: 0; z-index: 5; } }
-  .filters-in { max-width: 1048px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end; }
-  fieldset { border: 0; margin: 0; padding: 0; }
-  legend, label.lab { display: block; font-size: .78rem; color: var(--muted); margin-bottom: 4px; font-weight: 600;
-    text-transform: uppercase; letter-spacing: .04em; padding: 0; }
-  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--surface); }
-  .seg input { position: absolute; opacity: 0; pointer-events: none; }
-  .seg label { padding: 10px 16px; min-height: 44px; display: inline-flex; align-items: center; cursor: pointer; font-weight: 600; }
-  .seg input:checked + label { background: var(--accent); color: var(--accent-ink); }
-  .seg input:focus-visible + label { outline: 3px solid var(--focus); outline-offset: -3px; }
-  select, button.clear { min-height: 44px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line);
-    background: var(--surface); color: var(--ink); font: inherit; max-width: 100%; }
-  select:disabled { opacity: .5; }
-  button.clear { cursor: pointer; font-weight: 600; }
-  select:focus-visible, button:focus-visible, a.card:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-  .count { margin: 16px 0 4px; color: var(--muted); }
-  h2 { font-size: 1.15rem; margin: 22px 0 10px; }
-  .grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px;
-    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
-  a.card { display: flex; gap: 12px; align-items: center; text-decoration: none; background: var(--surface);
-    border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; min-height: 84px; height: 100%; }
-  a.card:hover { border-color: var(--accent); }
-  .art { width: 56px; height: 56px; flex: none; border-radius: 12px; background: var(--bg); object-fit: contain; padding: 4px; }
-  .card b { display: block; line-height: 1.2; }
-  .meta { display: block; font-size: .85rem; color: var(--muted); margin-top: 2px; }
-  .tag { font-weight: 700; }
-  .tag.fun { color: var(--fun); } .tag.learn { color: var(--learn); }
-  .empty { padding: 28px; text-align: center; background: var(--surface); border: 1px dashed var(--line);
-    border-radius: var(--radius); margin-top: 18px; }
-  footer { padding-top: 28px; padding-bottom: 40px; color: var(--muted); font-size: .9rem; }
+  button, select, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  svg.i { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+  section, h2, h3 { scroll-margin-top: calc(var(--bar-h) + 16px); }
+  h2:focus, h3:focus { outline: none; }
+  h2:focus-visible, h3:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 8px; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 var(--gut); }
+  .skip { position: absolute; left: 8px; top: -80px; z-index: 40; background: var(--accent); color: var(--accent-ink); padding: 12px 16px; border-radius: 12px; font-weight: 700; }
+  .skip:focus { top: 8px; }
+
+  /* Top bar */
+  .top { position: sticky; top: 0; z-index: 30; background: var(--bar); color: var(--bar-ink); box-shadow: var(--bar-sep); border-bottom: var(--bar-border); }
+  .top :focus-visible { outline-color: var(--bar-focus); }
+  .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding-top: 6px; padding-bottom: 6px; }
+  .brand { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: 1.15rem; font-weight: 800; text-decoration: none; color: var(--bar-ink); flex: none; }
+  .brand img { display: block; height: 40px; width: auto; }
+  .search { flex: 1 1 0; min-width: 0; position: relative; }
+  .search input { width: 100%; min-height: 48px; padding: 8px 52px 8px 46px; border-radius: 14px; border: 2px solid var(--bar-field-line); background: var(--bar-field); color: var(--ink); }
+  .search input::placeholder { color: var(--muted); opacity: 1; }
+  .search .lead { position: absolute; left: 14px; top: 12px; color: var(--muted); pointer-events: none; }
+  .search .xbtn { position: absolute; right: 2px; top: 2px; width: 44px; height: 44px; border: 0; background: rgba(0,0,0,0); color: var(--ink); border-radius: 12px; display: grid; place-items: center; }
+  .icon-btn { width: 44px; height: 44px; border-radius: 14px; border: 2px solid var(--bar-field-line); background: rgba(0,0,0,0); color: var(--bar-ink); display: grid; place-items: center; }
+  .actions { flex: 0 0 calc(100% + var(--gut) * 2); margin-inline: calc(var(--gut) * -1); display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x proximity; scroll-padding-inline: var(--gut);
+    padding: 6px var(--gut) 8px; scrollbar-width: thin; scrollbar-color: #7C8FD6 rgba(0,0,0,0); order: 5; }
+  .actw { position: relative; flex: none; scroll-snap-align: start; }
+  .act { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 0; color: var(--on-fill); font-weight: 800; font-size: .95rem; white-space: nowrap; transition: transform .12s, filter .12s; }
+  .act.maths { background: #FFB020; } .act.english { background: #B79CFF; } .act.play { background: #2CD3B0; } .act.recent { background: #4DB6FF; } .act.surprise { background: #FF7AC3; }
+  .act .chk { display: none; }
+  .act[aria-pressed="true"] { box-shadow: 0 0 0 2px #FFFFFF; }
+  .act[aria-pressed="true"] .chk { display: inline-block; }
+  .act:active { transform: scale(.97); filter: brightness(.94); }
+  .act:disabled { background: rgba(0,0,0,0); border: 2px dashed #7C8FD6; color: #C9D2F5; cursor: not-allowed; box-shadow: none; }
+  .tip { position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); z-index: 5; background: var(--tip-bg); color: var(--tip-ink); font-size: .875rem; font-weight: 600; line-height: 1.3;
+    padding: 6px 10px; border-radius: 10px; max-width: 220px; width: max-content; opacity: 0; visibility: hidden; transition: opacity .12s, visibility 0s .12s; }
+  .actw.r .tip { left: auto; right: 0; transform: none; }
+  @media (max-width: 479px) {
+    .brand img { height: 30px; }
+  }
+  @media (min-width: 768px) {
+    .actions { overflow: visible; }
+    .act:focus-visible ~ .tip { opacity: 1; visibility: visible; transition: opacity .12s; }
+    .tip.dismissed { opacity: 0 !important; visibility: hidden !important; }
+  }
+  @media (min-width: 768px) and (hover: hover) {
+    .actw:hover .tip { opacity: 1; visibility: visible; transition: opacity .12s .3s; }
+    .act:hover { filter: brightness(1.06); transform: translateY(-1px); }
+    .icon-btn:hover { background: rgba(255,255,255,.12); }
+    .act:disabled:hover { filter: none; transform: none; }
+  }
+  @media (min-width: 1024px) {
+    :root { --bar-h: 64px; --gut: 24px; }
+    .bar { flex-wrap: nowrap; }
+    .actions { flex: none; margin: 0; padding: 0; order: 1; }
+    .search { order: 2; flex: 1 1 auto; max-width: 420px; margin-left: auto; }
+    .icon-btn { order: 3; width: 48px; height: 48px; }
+    .actw.r { order: 3; }
+    .act { min-height: 48px; padding: 0 16px; font-size: 1rem; }
+    .brand { margin-right: 8px; }
+  }
+
+  /* Headline */
+  .hero { background: var(--hero); padding: 24px 0 8px; }
+  h1 { font-size: clamp(1.9rem, 6vw, 3rem); line-height: 1.1; font-weight: 800; letter-spacing: -.02em; margin: 0 0 8px; }
+  .hero p { margin: 0; color: var(--muted); font-size: 1.1rem; font-weight: 500; max-width: 60ch; }
+  @media (min-width: 768px) { .hero { padding: 32px 0 12px; } }
+  @media (min-width: 1280px) { .hero { padding: 40px 0 16px; } }
+
+  /* Sections */
+  main { padding-bottom: 8px; }
+  main section { margin-top: 32px; }
+  .shelf + .shelf { margin-top: 24px; }
+  h2 { display: flex; align-items: center; gap: 10px; font-size: 1.6rem; line-height: 1.2; font-weight: 800; margin: 0 0 4px; }
+  h3.sh { display: block; font-size: 1.2rem; line-height: 1.25; font-weight: 800; margin: 0; }
+  .cap { margin: 0 0 12px; color: var(--muted); font-size: .95rem; font-weight: 500; }
+  .link-btn { min-height: 44px; padding: 8px 12px; background: rgba(0,0,0,0); border: 0; border-radius: 12px; font-weight: 600; color: var(--ink); }
+  .link-btn:hover, .link-btn:focus-visible { text-decoration: underline; }
+  @media (min-width: 1280px) { main section { margin-top: 40px; } }
+
+  /* Shelves */
+  .shelf-head { display: flex; align-items: flex-end; gap: 12px; margin-bottom: 0; }
+  .shelf-text { flex: 1; min-width: 0; }
+  .shelf-text .cap { margin-bottom: 8px; }
+  .shelf-tools { display: flex; align-items: center; gap: 8px; padding-bottom: 6px; }
+  .arrows { display: none; gap: 8px; }
+  .arrow { width: 48px; height: 48px; border-radius: 999px; background: var(--surface); border: 2px solid var(--line); color: var(--ink); display: grid; place-items: center; box-shadow: var(--shadow); }
+  .arrow[aria-disabled="true"] { opacity: .4; box-shadow: none; cursor: default; }
+  .arrow:active:not([aria-disabled="true"]) { transform: scale(.96); }
+  @media (min-width: 768px) {
+    .arrows { display: flex; }
+    :root { --tw: 192px; --gap: 16px; }
+  }
+  @media (hover: hover) { .arrow:hover:not([aria-disabled="true"]) { border-color: var(--accent); background: var(--surface-2); } }
+  .scroller { overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-padding-inline: var(--gut); padding: 10px var(--gut) 18px; margin-inline: calc(var(--gut) * -1); scrollbar-width: thin; }
+  .row { list-style: none; margin: 0; padding: 0; display: flex; gap: var(--gap); width: max-content; }
+  .row > li { flex: none; scroll-snap-align: start; }
+  .row.tiles > li { width: var(--tw); }
+  @media (min-width: 1280px) { :root { --tw: 208px; } }
+  @media (min-width: 1600px) { :root { --tw: 220px; } }
+
+  /* Tiles */
+  .tile { display: flex; flex-direction: column; width: 100%; height: 100%; text-decoration: none; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; overflow: hidden;
+    box-shadow: var(--shadow); transition: transform .12s ease-out, border-color .12s, box-shadow .12s; }
+  .tile:active { transform: scale(.98); }
+  .tile:active .tbody { background: var(--surface-2); }
+  @media (hover: hover) { .tile:hover { transform: translateY(-2px); border-color: var(--accent); box-shadow: var(--shadow-up); } }
+  .media { position: relative; display: block; aspect-ratio: 4 / 3; background: var(--tint, var(--surface-2)); overflow: hidden; }
+  img.tileart { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .media.fallback img.tileart { position: absolute; inset: 0; margin: auto; width: 72px; height: 72px; object-fit: contain; border-radius: 22%; box-shadow: var(--art-shadow); }
+  @media (min-width: 768px) { .media.fallback img.tileart { width: 96px; height: 96px; } }
+  .pill { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); padding: 6px 18px; border-radius: 999px; background: var(--pill-bg); color: #FFFFFF; font-weight: 800; font-size: 1rem; line-height: 1.2; white-space: nowrap; }
+  @media (min-width: 768px) { .pill { font-size: 1.1rem; } }
+  .tbody { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px 12px; min-height: 80px; }
+  .ttl { font-size: 1.05rem; line-height: 1.25; font-weight: 700; overflow-wrap: anywhere; }
+  .tmeta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 999px; font-size: .875rem; font-weight: 800; color: var(--on-fill); }
+  .b-play { background: #2CD3B0; } .b-maths { background: #FFB020; } .b-english { background: #B79CFF; }
+  .meta { font-size: .875rem; font-weight: 500; color: var(--muted); overflow-wrap: anywhere; }
+  .skel { background: var(--surface-2); border-radius: 20px; aspect-ratio: 4 / 3.9; width: 100%; animation: pulse 1.6s linear infinite; }
+  .skel-card { background: var(--surface-2); border-radius: 24px; min-height: 176px; animation: pulse 1.6s linear infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .6; } }
+
+  /* Jump in cards */
+  .row.cards > li { width: min(264px, 82vw); }
+  @media (min-width: 768px) { .row.cards > li { width: 280px; } }
+  @media (min-width: 1280px) { .row.cards > li { width: 264px; } }
+  .jump-card { display: flex; flex-direction: column; gap: 4px; height: 100%; min-height: 176px; padding: 16px; border-radius: 24px; color: var(--on-fill); box-shadow: var(--shadow); }
+  .jump-card :focus-visible { outline-color: #101A44; }
+  .jc-pink { background: #FF7AC3; } .jc-sky { background: #4DB6FF; } .jc-lime { background: #9BD93C; } .jc-coral { background: #FF6B5E; }
+  .jbadge { width: 48px; height: 48px; border-radius: 50%; background: rgba(16,26,68,.12); display: grid; place-items: center; margin-bottom: 4px; }
+  .jump-card h3 { margin: 0; font-size: 1.25rem; line-height: 1.2; font-weight: 800; }
+  .jump-card p { margin: 0 0 12px; font-size: .95rem; font-weight: 500; overflow-wrap: anywhere; }
+  .jbtn { margin-top: auto; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 20px; border: 0; border-radius: 999px; background: #101A44; color: #FFFFFF; font-size: 1.05rem; font-weight: 800; width: 100%; }
+  .jbtn:active { transform: scale(.98); }
+  @media (hover: hover) { .jbtn:hover { filter: brightness(1.25); } }
+  @media (min-width: 768px) { .jump-card { padding: 20px; } .jbtn { width: auto; align-self: flex-start; } }
+  @media (min-width: 1024px) { .jbtn { min-height: 52px; } }
+
+  /* Learn controls */
+  .lab { display: block; font-weight: 700; margin: 12px 0 8px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip, .seg button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; min-width: 48px; padding: 8px 16px; border-radius: 999px;
+    border: 2px solid var(--line); background: var(--surface-2); font-weight: 600; transition: background-color .12s, transform .12s; }
+  .chip svg.chk, .seg svg.chk { display: none; }
+  .chip[aria-pressed="true"], .seg button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 800; }
+  .chip[aria-pressed="true"] svg.chk, .seg button[aria-pressed="true"] svg.chk { display: inline-block; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 520px; }
+  .seg button { border-radius: 16px; padding: 8px 8px; }
+  @media (max-width: 359px) { .seg button { flex-direction: column; gap: 2px; } }
+  @media (hover: hover) { .chip:hover, .seg button:hover, .xbtn:hover, .btn:hover { background-color: var(--surface-2); } .btn.primary:hover { background-color: var(--accent); filter: brightness(1.08); } }
+  .chip:active, .seg button:active, .btn:active { transform: scale(.98); }
+  .stat { margin: 16px 0 8px; color: var(--muted); font-size: .875rem; font-weight: 500; min-height: 1.5em; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 8px 16px; border-radius: 16px; border: 2px solid var(--line); background: var(--surface); font-size: 1rem; font-weight: 700; text-decoration: none; }
+  .panel { background: var(--surface); border: 2px dashed var(--line); border-radius: 20px; padding: 32px 16px; text-align: center; margin-top: 8px; }
+  .panel svg { color: var(--muted); margin-bottom: 8px; }
+  .panel h3 { display: block; margin: 0 0 4px; font-size: 1.25rem; }
+  .panel p { margin: 0 0 12px; color: var(--muted); }
+  .panel p:last-child { margin-bottom: 0; }
+
+  details { margin-top: 32px; }
+  summary { display: flex; align-items: center; gap: 10px; min-height: 48px; font-weight: 700; cursor: pointer; list-style: none; border-radius: 12px; padding: 0 4px; }
+  summary::-webkit-details-marker { display: none; }
+  summary .chev { margin-left: auto; transition: transform .15s; }
+  details[open] summary .chev { transform: rotate(180deg); }
+  .filters { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-end; padding: 8px 4px 0; }
+  .filters .f { flex: 1 1 100%; }
+  .filters label { display: block; font-weight: 700; margin-bottom: 4px; }
+  select { width: 100%; min-height: 48px; padding: 8px 12px; border-radius: 14px; border: 2px solid var(--line); background: var(--surface); }
+  select:disabled { opacity: .55; cursor: not-allowed; }
+  @media (min-width: 768px) { .filters .f { flex: 0 0 220px; } }
+
+  /* Ad slot: empty on purpose, takes no space until a unit is added */
+  .ad-slot { max-width: 728px; margin: 32px auto 0; }
+  .ad-slot:empty { display: none; }
+
+  /* Search results */
+  ul.grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  @media (min-width: 768px) { ul.grid { gap: 16px; } }
+
+  footer { padding-top: 48px; padding-bottom: 40px; color: var(--muted); font-size: .9rem; text-align: center; }
+  footer p { margin: 0 auto; max-width: 60ch; display: flex; gap: 8px; align-items: flex-start; justify-content: center; text-align: left; }
+  footer svg { margin-top: 2px; }
+  .foot-logo { margin: 0 auto 24px; text-align: center; }
+  .foot-logo img { width: 150px; height: auto; }
+  .foot-logo .lg-dark { display: none; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .foot-logo .lg-light { display: none; } :root:not([data-theme="light"]) .foot-logo .lg-dark { display: inline; } }
+  :root[data-theme="dark"] .foot-logo .lg-light { display: none; } :root[data-theme="dark"] .foot-logo .lg-dark { display: inline; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+    .tile:hover, .tile:active, .act:hover, .act:active, .jbtn:active, .arrow:active, .chip:active, .seg button:active, .btn:active { transform: none !important; }
+  }
+  @media (forced-colors: active) {
+    .tile, .chip, .seg button, .btn, .icon-btn, .act, .jump-card, .arrow { border: 2px solid ButtonText; }
+    .chip[aria-pressed="true"], .seg button[aria-pressed="true"], .act[aria-pressed="true"] { border-color: Highlight; }
+    :focus-visible { outline: 3px solid Highlight; }
+  }
 </style>
 </head>
 <body>
-<header>
-  <h1>Games to learn and play</h1>
-  <p>Pick Learn for maths and English practice, or Fun for calm puzzles and arcade games. Choose a year, a topic or a game to narrow the list.</p>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2z"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M10 8.5l5.5 3.5-5.5 3.5z"/></symbol>
+    <symbol id="i-gamepad" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="5.5"/><path d="M7 10.5v4M5 12.5h4M15.5 11.5h.01M18 13.5h.01"/></symbol>
+    <symbol id="i-calc" viewBox="0 0 24 24"><rect x="4" y="2.5" width="16" height="19" rx="3"/><path d="M8 7h8M9 11v4M7 13h4M14 13h3M14 17h3"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M2 5h6a4 4 0 0 1 4 4v11a3 3 0 0 0-3-3H2zM22 5h-6a4 4 0 0 0-4 4v11a3 3 0 0 1 3-3h7z"/></symbol>
+    <symbol id="i-both" viewBox="0 0 24 24"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h10M18 18h2"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-warning" viewBox="0 0 24 24"><path d="M12 3L2 20h20zM12 10v4M12 17.5h.01"/></symbol>
+    <symbol id="i-device" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="3"/><path d="M11 18h2"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 6M20 4v7h-7"/></symbol>
+    <symbol id="i-maths" viewBox="0 0 24 24"><path d="M3.5 7h7M7 3.5v7M14 7h7M4 15l6 6M10 15l-6 6M14 16.5h7M14 20h7"/></symbol>
+    <symbol id="i-english" viewBox="0 0 24 24"><path d="M4 20l1.2-4.8L16.5 3.9a2 2 0 0 1 2.8 0l.8.8a2 2 0 0 1 0 2.8L8.8 18.8zM14 6.5l3.5 3.5"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.8 6.6 19.7l1.1-6.1L3.2 9.4l6.1-.8z"/></symbol>
+    <symbol id="i-chev-l" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+  </defs>
+</svg>
+
+<a class="skip" href="#main">Skip to games</a>
+
+<header class="top" id="top">
+  <div class="wrap bar">
+    <a class="brand" href="./" id="brand"><img src="_site/art/brand/logo-horizontal-dark.svg" width="200" height="40" alt="Active Mind Craft"></a>
+    <div class="search" role="search">
+      <label class="sr" for="q">Search games and topics</label>
+      <svg class="i lead" width="24" height="24" aria-hidden="true" focusable="false"><use href="#i-search"/></svg>
+      <input id="q" type="search" placeholder="Search games and topics" autocomplete="off" enterkeyhint="search" spellcheck="false">
+      <button class="xbtn" id="qclear" type="button" aria-label="Clear search" hidden><svg class="i" width="24" height="24" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
+    </div>
+    <span class="actw r"><button class="icon-btn" id="theme" type="button" aria-label="Switch theme" aria-describedby="tip-theme"></button><span class="tip" role="tooltip" id="tip-theme">Switch theme</span></span>
+    <nav class="actions" aria-label="Sections">
+      <span class="actw"><button class="act maths" id="b-maths" type="button" aria-pressed="false" aria-describedby="tip-maths" disabled><svg class="i" width="22" height="22" aria-hidden="true" focusable="false"><use href="#i-maths"/></svg>Maths<svg class="i chk" width="18" height="18" aria-hidden="true" focusable="false"><use href="#i-check"/></svg></button><span class="tip" role="tooltip" id="tip-maths">Maths topics by year</span></span>
+      <span class="actw"><button class="act english" id="b-english" type="button" aria-pressed="false" aria-describedby="tip-english" disabled><svg class="i" width="22" height="22" aria-hidden="true" focusable="false"><use href="#i-english"/></svg>English<svg class="i chk" width="18" height="18" aria-hidden="true" focusable="false"><use href="#i-check"/></svg></button><span class="tip" role="tooltip" id="tip-english">English topics by year</span></span>
+      <span class="actw"><button class="act play" id="b-play" type="button" aria-describedby="tip-play" disabled><svg class="i" width="22" height="22" aria-hidden="true" focusable="false"><use href="#i-gamepad"/></svg>Play</button><span class="tip" role="tooltip" id="tip-play">Puzzles and arcade games</span></span>
+      <span class="actw" id="w-recent" hidden><button class="act recent" id="b-recent" type="button" aria-describedby="tip-recent" disabled><svg class="i" width="22" height="22" aria-hidden="true" focusable="false"><use href="#i-clock"/></svg>Recent</button><span class="tip" role="tooltip" id="tip-recent">Games you played lately</span></span>
+      <span class="actw"><button class="act surprise" id="b-surprise" type="button" aria-describedby="tip-surprise" disabled><svg class="i" width="22" height="22" aria-hidden="true" focusable="false"><use href="#i-shuffle"/></svg>Surprise me</button><span class="tip" role="tooltip" id="tip-surprise">Open a random game or quiz</span></span>
+    </nav>
+  </div>
 </header>
 
-<div class="filters" role="search">
-  <div class="filters-in">
-    <fieldset>
-      <legend>Type</legend>
-      <div class="seg" id="type">
-        <input type="radio" name="type" id="t-all" value="all" checked><label for="t-all">All</label>
-        <input type="radio" name="type" id="t-learn" value="learn"><label for="t-learn">Learn</label>
-        <input type="radio" name="type" id="t-fun" value="fun"><label for="t-fun">Fun</label>
-      </div>
-    </fieldset>
-    <div><label class="lab" for="year">Year</label><select id="year"><option value="">Any year</option></select></div>
-    <div><label class="lab" for="topic">Topic</label><select id="topic"><option value="">Any topic</option></select></div>
-    <div><label class="lab" for="game">Game</label><select id="game"><option value="">Any game</option></select></div>
-    <button class="clear" id="clear" type="button">Clear filters</button>
+<main id="main" aria-busy="true">
+  <div class="hero" id="hero">
+    <div class="wrap">
+      <h1>Build your mind, one game at a time.</h1>
+      <p>Practise maths and English by year, or jump straight into a puzzle or an arcade game.</p>
+    </div>
   </div>
-</div>
 
-<main>
-  <noscript><p class="empty">This page needs JavaScript to list the games.</p></noscript>
-  <p class="count" id="count" role="status" aria-live="polite"></p>
-  <div id="results"></div>
+  <div class="wrap">
+    <noscript><div class="panel"><p>This page needs JavaScript to list the games.</p></div></noscript>
+
+    <div id="err" class="panel" hidden>
+      <svg class="i" width="48" height="48" aria-hidden="true" focusable="false"><use href="#i-warning"/></svg>
+      <h3>The game list could not be loaded.</h3>
+      <p>Check the connection and try once more.</p>
+      <button class="btn" id="retry" type="button"><svg class="i" width="24" height="24" aria-hidden="true" focusable="false"><use href="#i-refresh"/></svg>Try again</button>
+    </div>
+
+    <div id="shelves">
+      <section id="jump" hidden><div id="jumpBody"></div></section>
+
+      <section id="recent" hidden><div id="recentBody"></div></section>
+
+      <section id="learn" hidden>
+        <h2 id="learnH" tabindex="-1"><svg class="i" width="28" height="28" aria-hidden="true" focusable="false"><use href="#i-book"/></svg>Learn</h2>
+        <p class="cap">Pick a year, then a topic.</p>
+        <div id="learnBody">
+          <span class="lab" id="yl">Year</span>
+          <div class="chips" id="years" role="group" aria-labelledby="yl"></div>
+          <span class="lab" id="sl">Subject</span>
+          <div class="seg" id="subj" role="group" aria-labelledby="sl"></div>
+          <p class="stat" id="lstat" aria-live="polite"></p>
+          <div id="lout"></div>
+        </div>
+        <details id="more">
+          <summary><svg class="i" width="24" height="24" aria-hidden="true" focusable="false"><use href="#i-sliders"/></svg>More filters<svg class="i chev" width="24" height="24" aria-hidden="true" focusable="false"><use href="#i-chevron"/></svg></summary>
+          <div class="filters">
+            <div class="f"><label for="topic">Topic</label><select id="topic"></select></div>
+            <div class="f"><label for="game">Game</label><select id="game"></select></div>
+            <button class="btn" id="clearAll" type="button">Clear filters</button>
+          </div>
+        </details>
+      </section>
+
+      <!-- AD SLOT 1: intentionally empty. A future ad unit goes inside this container. No ad code, scripts or network calls belong here yet. -->
+      <div class="ad-slot" id="ad-slot-1"></div>
+
+      <section id="play">
+        <h2 id="playH" tabindex="-1"><svg class="i" width="28" height="28" aria-hidden="true" focusable="false"><use href="#i-gamepad"/></svg>Play</h2>
+        <p class="cap">Open any game and start in one click.</p>
+        <div id="playBody"></div>
+      </section>
+
+      <section id="tg" hidden><div id="tgBody"></div></section>
+    </div>
+
+    <section id="results" hidden>
+      <h2 id="resH" tabindex="-1"><svg class="i" width="28" height="28" aria-hidden="true" focusable="false"><use href="#i-search"/></svg>Results</h2>
+      <p class="stat" id="rstat" role="status"></p>
+      <div id="rout"></div>
+    </section>
+  </div>
 </main>
 
-<footer>
-  <p>Nothing is saved on this website: your progress is not kept when you close the page. Each game shows how to play the first time you open it, and the Rules button brings it back.</p>
+<footer class="wrap">
+  <div class="foot-logo"><img class="lg-light" src="_site/art/brand/logo-vertical-light.svg" width="150" height="200" alt="Active Mind Craft" loading="lazy"><img class="lg-dark" src="_site/art/brand/logo-vertical-dark.svg" width="150" height="200" alt="" aria-hidden="true" loading="lazy"></div>
+  <p><svg class="i" width="24" height="24" aria-hidden="true" focusable="false"><use href="#i-device"/></svg><span>This device remembers your recent games and settings. Nothing is sent anywhere, and there is no account.</span></p>
 </footer>
 
 <script>
 (function () {
   'use strict';
-  var cards = [], state = { type: 'all', year: '', topic: '', game: '' };
+  var CAP = 60, RECENT_MAX = 6;
+  var ART = '_site/art/';
+  var TINTS = ['#FF6B5E', '#2CD3B0', '#4DB6FF', '#FF7AC3', '#9BD93C', '#6C7CFF'];
+  /* Play grouping, keyed by gameId. Any Fun game not listed here goes to "More games". */
+  var GROUPS = [
+    { id: 'puzzles', label: 'Puzzles', cap: 'Think it through, one move at a time.', ids: ['block_puzzle', 'blockfall', 'sudoku', 'solitaire', 'ball_sort', 'mahjong', 'merge'] },
+    { id: 'arcade', label: 'Arcade', cap: 'Quick reflexes and big scores.', ids: ['wingy', 'snake', 'bricks', 'stack', 'runner'] }
+  ];
+  var NS = 'http://www.w3.org/2000/svg';
   var $ = function (id) { return document.getElementById(id); };
-  var yearName = function (y) { return y === 0 ? 'Foundation' : 'Year ' + y; };
-  var cap = function (s) { return s.charAt(0).toUpperCase() + s.slice(1); };
-  var el = function (tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  var root = document.documentElement;
+  var reduce = false;
+  try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { /* default */ }
 
+  var cards = [], byId = {}, years = [], loaded = false;
+  var state = { type: '', year: '', subject: '', topic: '', game: '', q: '' };
+  var searchLimit = CAP, debounce = 0;
+  var ctls = [];
+
+  /* ---------- helpers ---------- */
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function icon(name, size, cls) {
+    var s = document.createElementNS(NS, 'svg');
+    s.setAttribute('class', 'i' + (cls ? ' ' + cls : '')); s.setAttribute('viewBox', '0 0 24 24');
+    s.setAttribute('width', size || 24); s.setAttribute('height', size || 24);
+    s.setAttribute('aria-hidden', 'true'); s.setAttribute('focusable', 'false');
+    var u = document.createElementNS(NS, 'use'); u.setAttribute('href', '#i-' + name); s.appendChild(u);
+    return s;
+  }
+  function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+  function yearName(y) { return y === 0 ? 'Foundation' : 'Year ' + y; }
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+  function hash(s) { var h = 0; s = String(s); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
+  function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+  function isQuiz(c) { return c.gameId === 'quick_quiz'; }
+  function funCards() { return cards.filter(function (c) { return c.kind === 'fun'; }); }
+  function quizCards() { return cards.filter(function (c) { return c.kind === 'learn' && isQuiz(c); }); }
+  function gameIsFun(id) { return cards.some(function (c) { return c.kind === 'fun' && c.gameId === id; }); }
+
+  var store = {
+    get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage blocked: forget */ } },
+    del: function (k) { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } }
+  };
+
+  /* ---------- theme ---------- */
+  function effTheme() {
+    var t = root.getAttribute('data-theme');
+    if (t === 'light' || t === 'dark') return t;
+    try { return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; } catch (e) { return 'light'; }
+  }
+  function paintTheme() {
+    var b = $('theme'), dark = effTheme() === 'dark', label = dark ? 'Switch to light theme' : 'Switch to dark theme';
+    clear(b); b.appendChild(icon(dark ? 'sun' : 'moon', 24));
+    b.setAttribute('aria-label', label); $('tip-theme').textContent = label;
+  }
+  $('theme').addEventListener('click', function () {
+    var next = effTheme() === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next); store.set('amc.theme', next); paintTheme();
+  });
+  try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', paintTheme); } catch (e) { /* old browser */ }
+  paintTheme();
+
+  /* ---------- bar height, tooltips, placeholder ---------- */
+  function measureBar() { root.style.setProperty('--bar-h', $('top').offsetHeight + 'px'); }
+  try { new ResizeObserver(measureBar).observe($('top')); } catch (e) { window.addEventListener('resize', measureBar); }
+  measureBar();
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') document.querySelectorAll('.tip').forEach(function (t) { t.classList.add('dismissed'); });
+  });
+  document.querySelectorAll('.actw').forEach(function (w) {
+    var undo = function () { var t = w.querySelector('.tip'); if (t) t.classList.remove('dismissed'); };
+    w.addEventListener('mouseenter', undo); w.addEventListener('focusin', undo);
+  });
+  try {
+    var mq = window.matchMedia('(max-width: 479px)');
+    var ph = function () { $('q').placeholder = mq.matches ? 'Search' : 'Search games and topics'; };
+    ph(); mq.addEventListener('change', ph);
+  } catch (e) { /* keep the long placeholder */ }
+
+  /* ---------- URL ---------- */
   function readUrl() {
-    var q = new URLSearchParams(location.search);
-    ['type', 'year', 'topic', 'game'].forEach(function (k) { if (q.has(k)) state[k] = q.get(k); });
-    if (['all', 'learn', 'fun'].indexOf(state.type) < 0) state.type = 'all';
+    var p = new URLSearchParams(location.search);
+    var t = p.get('type'); state.type = (t === 'learn' || t === 'fun') ? t : '';
+    var y = p.get('year'); state.year = (y !== null && /^\d{1,2}$/.test(y)) ? String(parseInt(y, 10)) : '';
+    var s = p.get('subject'); state.subject = (s === 'maths' || s === 'english') ? s : '';
+    state.topic = p.get('topic') || ''; state.game = p.get('game') || ''; state.q = p.get('q') || '';
   }
   function writeUrl() {
-    var q = new URLSearchParams();
-    if (state.type !== 'all') q.set('type', state.type);
-    ['year', 'topic', 'game'].forEach(function (k) { if (state[k]) q.set(k, state[k]); });
-    var s = q.toString();
+    var p = new URLSearchParams();
+    ['type', 'year', 'subject', 'topic', 'game', 'q'].forEach(function (k) { if (state[k]) p.set(k, state[k]); });
+    var s = p.toString();
     try { history.replaceState(null, '', location.pathname + (s ? '?' + s : '')); } catch (e) { /* ignore */ }
   }
 
-  function fillSelect(sel, items, anyLabel, value) {
-    sel.textContent = '';
-    sel.appendChild(new Option(anyLabel, ''));
-    items.forEach(function (it) {
-      if (it.group) {
-        var g = document.createElement('optgroup'); g.label = it.group;
-        it.options.forEach(function (o) { g.appendChild(new Option(o.label, o.value)); });
-        sel.appendChild(g);
-      } else { sel.appendChild(new Option(it.label, it.value)); }
-    });
-    sel.value = value;
-    if (sel.value !== value) { sel.value = ''; }
+  /* ---------- recent ---------- */
+  function readRecent() {
+    var out = [], seen = {};
+    try {
+      var l = JSON.parse(store.get('amc.recent') || '[]');
+      if (Array.isArray(l)) l.forEach(function (id) { if (typeof id === 'string' && byId[id] && !seen[id] && out.length < RECENT_MAX) { seen[id] = 1; out.push(id); } });
+    } catch (e) { /* bad data: ignore */ }
+    return out;
+  }
+  function remember(id) {
+    var l = readRecent().filter(function (x) { return x !== id; }); l.unshift(id);
+    store.set('amc.recent', JSON.stringify(l.slice(0, RECENT_MAX)));
+  }
+  function hook(a, c) {
+    var f = function () { remember(c.id); setTimeout(renderRecent, 400); };
+    a.addEventListener('click', f); a.addEventListener('auxclick', f);
+  }
+  function openCard(c) { remember(c.id); location.href = c.link; }
+
+  /* ---------- tiles ---------- */
+  function learnMeta(c) { return cap(c.subject) + ', ' + yearName(c.year); }
+  function tile(c) {
+    var li = el('li'), a = el('a', 'tile'); a.href = c.link;
+    var fun = c.kind === 'fun', quiz = !fun && isQuiz(c);
+    var tint, primary, small = false;
+    if (fun) { tint = TINTS[hash(c.gameId) % TINTS.length]; primary = 'tile-' + c.gameId; }
+    else if (quiz) { tint = c.subject === 'maths' ? '#FFB020' : '#B79CFF'; primary = 'tile-' + c.subject; }
+    else { tint = TINTS[hash(c.gameId) % TINTS.length]; primary = c.art; small = true; }
+    var media = el('span', 'media'); media.style.setProperty('--tint', tint);
+    var img = el('img', 'tileart'); img.alt = ''; img.width = 400; img.height = 300; img.loading = 'lazy'; img.decoding = 'async';
+    var stage = small ? 1 : 0;
+    if (small) media.classList.add('fallback');
+    img.onerror = function () {
+      if (stage === 0) { stage = 1; media.classList.add('fallback'); img.src = ART + c.art + '.svg'; }
+      else img.remove();
+    };
+    img.src = ART + primary + '.svg';
+    media.appendChild(img);
+    if (quiz) { var pill = el('span', 'pill', cap(c.subject)); pill.setAttribute('aria-hidden', 'true'); media.appendChild(pill); }
+    a.appendChild(media);
+
+    var body = el('span', 'tbody'); body.appendChild(el('b', 'ttl', c.title));
+    var meta = el('span', 'tmeta');
+    var badge = el('span', 'badge ' + (fun ? 'b-play' : 'b-' + c.subject));
+    badge.appendChild(icon(fun ? 'gamepad' : (c.subject === 'maths' ? 'maths' : 'english'), 16));
+    badge.appendChild(document.createTextNode(fun ? 'Play' : cap(c.subject)));
+    meta.appendChild(badge);
+    var text, label;
+    if (fun) { text = 'from ' + c.from; label = c.title + ', from ' + c.from; }
+    else if (quiz) {
+      text = yearName(c.year) + (c.items > 0 ? ' · ' + plural(c.items, 'item', 'items') : '');
+      label = c.title + ', ' + learnMeta(c) + (c.items > 0 ? ', ' + plural(c.items, 'item', 'items') : '');
+    } else { text = yearName(c.year) + ' · ' + c.game; label = c.title + ', ' + learnMeta(c) + ', ' + c.game; }
+    meta.appendChild(el('span', 'meta', text));
+    body.appendChild(meta); a.appendChild(body);
+    a.setAttribute('aria-label', label);
+    hook(a, c); li.appendChild(a); return li;
+  }
+  function grid(list, fn) { var ul = el('ul', 'grid'); list.forEach(function (c) { ul.appendChild(fn(c)); }); return ul; }
+  function panel(iconName, head, line, btnLabel, btnFn) {
+    var d = el('div', 'panel'); d.appendChild(icon(iconName, 48));
+    d.appendChild(el('h3', null, head)); if (line) d.appendChild(el('p', null, line));
+    if (btnLabel) { var b = el('button', 'btn', btnLabel); b.type = 'button'; b.addEventListener('click', btnFn); d.appendChild(b); }
+    return d;
+  }
+  function showMore(onClick) {
+    var b = el('button', 'btn', 'Show more'); b.type = 'button'; b.style.marginTop = '16px';
+    b.addEventListener('click', onClick); return b;
   }
 
-  function buildSelects() {
+  /* ---------- shelves ---------- */
+  function setDis(btn, d) { btn.setAttribute('aria-disabled', d ? 'true' : 'false'); }
+  function updArrows(c) {
+    var s = c.sc, over = s.scrollWidth > s.clientWidth + 2;
+    c.arrows.hidden = !over; if (!over) return;
+    setDis(c.prev, s.scrollLeft <= 1); setDis(c.next, s.scrollLeft + s.clientWidth >= s.scrollWidth - 2);
+  }
+  function updateArrows() {
+    ctls = ctls.filter(function (c) { return document.documentElement.contains(c.sc); });
+    ctls.forEach(updArrows);
+  }
+  window.addEventListener('resize', updateArrows);
+  function arrowBtn(dir, label) {
+    var b = el('button', 'arrow'); b.type = 'button'; b.setAttribute('aria-label', 'Scroll ' + label + ' ' + dir);
+    b.appendChild(icon(dir === 'left' ? 'chev-l' : 'chev-r', 24)); return b;
+  }
+  function shelf(o) {
+    var box = el('div', 'shelf'); box.setAttribute('role', 'group'); box.setAttribute('aria-labelledby', o.id + 'H');
+    var head = el('div', 'shelf-head'), tx = el('div', 'shelf-text');
+    var h = el(o.level || 'h3', o.level === 'h2' ? null : 'sh'); h.id = o.id + 'H'; h.tabIndex = -1;
+    if (o.icon) h.appendChild(icon(o.icon, 28));
+    h.appendChild(document.createTextNode(o.label)); tx.appendChild(h);
+    if (o.cap) tx.appendChild(el('p', 'cap', o.cap));
+    head.appendChild(tx);
+    var tools = el('div', 'shelf-tools'); if (o.extra) tools.appendChild(o.extra);
+    var arrows = el('div', 'arrows'), prev = arrowBtn('left', o.label), next = arrowBtn('right', o.label);
+    arrows.appendChild(prev); arrows.appendChild(next); tools.appendChild(arrows); head.appendChild(tools); box.appendChild(head);
+    var sc = el('div', 'scroller'), ul = el('ul', 'row ' + (o.rowClass || 'tiles'));
+    o.items.forEach(function (li) { ul.appendChild(li); }); sc.appendChild(ul); box.appendChild(sc);
+    var c = { sc: sc, arrows: arrows, prev: prev, next: next }; ctls.push(c);
+    sc.addEventListener('scroll', function () { updArrows(c); }, { passive: true });
+    function go(dir) {
+      return function () {
+        if (this.getAttribute('aria-disabled') === 'true') return;
+        var first = ul.firstElementChild; if (!first) return;
+        var step = first.offsetWidth + (parseFloat(getComputedStyle(ul).columnGap) || 0);
+        var n = Math.max(1, Math.floor(sc.clientWidth / step));
+        sc.scrollBy({ left: dir * n * step, behavior: reduce ? 'auto' : 'smooth' });
+      };
+    }
+    prev.addEventListener('click', go(-1)); next.addEventListener('click', go(1));
+    ul.addEventListener('keydown', function (e) {
+      if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].indexOf(e.key) < 0) return;
+      var a = e.target.closest ? e.target.closest('a.tile') : null; if (!a) return;
+      var all = Array.prototype.slice.call(ul.querySelectorAll('a.tile')), i = all.indexOf(a), t = -1;
+      if (e.key === 'ArrowRight') t = Math.min(all.length - 1, i + 1);
+      else if (e.key === 'ArrowLeft') t = Math.max(0, i - 1);
+      else if (e.key === 'Home') t = 0; else t = all.length - 1;
+      e.preventDefault(); if (all[t]) all[t].focus();
+    });
+    return box;
+  }
+  function skelShelf(n) {
+    var sc = el('div', 'scroller'), ul = el('ul', 'row tiles'); sc.setAttribute('aria-hidden', 'true');
+    for (var i = 0; i < n; i++) { var li = el('li'); li.appendChild(el('div', 'skel')); ul.appendChild(li); }
+    sc.appendChild(ul); return sc;
+  }
+
+  /* ---------- Jump in ---------- */
+  function today() {
+    var fun = funCards().sort(function (a, b) { return a.gameId < b.gameId ? -1 : a.gameId > b.gameId ? 1 : 0; });
+    if (!fun.length) return null;
+    return fun[Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 864e5) % fun.length];
+  }
+  function randomQuiz() { var q = quizCards(); return q.length ? q[Math.floor(Math.random() * q.length)] : null; }
+  function surprise() {
+    var fun = funCards(), quiz = quizCards();
+    var pool = fun.length && quiz.length ? (Math.random() < 0.5 ? fun : quiz) : (fun.length ? fun : quiz);
+    if (!pool.length) return;
+    openCard(pool[Math.floor(Math.random() * pool.length)]);
+  }
+  function jumpCard(fill, iconName, title, sentence, btnText, label, fn) {
+    var li = el('li'), d = el('div', 'jump-card ' + fill);
+    var b = el('span', 'jbadge'); b.appendChild(icon(iconName, 28)); d.appendChild(b);
+    d.appendChild(el('h3', null, title)); d.appendChild(el('p', null, sentence));
+    var btn = el('button', 'jbtn'); btn.type = 'button'; btn.appendChild(icon(iconName === 'shuffle' ? 'shuffle' : 'play', 20)); btn.appendChild(document.createTextNode(btnText));
+    if (label) btn.setAttribute('aria-label', label);
+    btn.addEventListener('click', fn); d.appendChild(btn); li.appendChild(d); return li;
+  }
+  function renderJump() {
+    var sec = $('jump'), body = $('jumpBody');
+    if (!loaded || !cards.length) { sec.hidden = true; return; }
+    sec.hidden = false; clear(body);
+    var items = [];
+    items.push(jumpCard('jc-pink', 'shuffle', 'Surprise me', 'A random game or quiz, picked for you.', 'Pick for me', '', surprise));
+    var rec = readRecent();
+    if (rec.length) {
+      var rc = byId[rec[0]], rt = rc.kind === 'fun' ? rc.title : rc.title + ', ' + learnMeta(rc);
+      items.push(jumpCard('jc-sky', 'play', 'Continue', rt, 'Keep going', 'Continue ' + rc.title, function () { openCard(rc); }));
+    }
+    if (quizCards().length) items.push(jumpCard('jc-lime', 'bolt', 'Quick quiz', 'A short Maths or English round.', 'Start a quiz', '', function () { var q = randomQuiz(); if (q) openCard(q); }));
+    var t = today();
+    if (t) items.push(jumpCard('jc-coral', 'star', 'Today’s pick', t.title, 'Play it', 'Play ' + t.title + ', today’s pick', function () { openCard(t); }));
+    body.appendChild(shelf({ id: 'jump', level: 'h2', icon: 'bolt', label: 'Jump in', cap: 'Not sure where to start? Try one of these.', items: items, rowClass: 'cards' }));
+  }
+
+  /* ---------- Recent ---------- */
+  function renderRecent() {
+    var ids = loaded ? readRecent() : [];
+    $('w-recent').hidden = ids.length === 0;
+    var sec = $('recent'), body = $('recentBody'); clear(body);
+    sec.hidden = ids.length === 0;
+    if (ids.length) {
+      var cb = el('button', 'link-btn', 'Clear'); cb.type = 'button'; cb.setAttribute('aria-label', 'Clear recent games');
+      cb.addEventListener('click', function () { store.del('amc.recent'); renderRecent(); });
+      body.appendChild(shelf({ id: 'recent', level: 'h2', icon: 'clock', label: 'Pick up where you left off', cap: 'Your latest games on this device.', extra: cb,
+        items: ids.map(function (id) { return tile(byId[id]); }) }));
+    }
+    renderJump(); updateArrows();
+  }
+
+  /* ---------- Play ---------- */
+  function renderPlay() {
+    var sec = $('play'), body = $('playBody'); clear(body);
+    var fun = funCards();
+    if (!cards.length) { body.appendChild(el('p', 'stat', 'No games are listed yet. Please check back soon.')); sec.hidden = false; return; }
+    var hide = state.type === 'learn' || !!state.topic || (state.game && !gameIsFun(state.game));
+    if (state.game && gameIsFun(state.game)) fun = fun.filter(function (c) { return c.gameId === state.game; });
+    sec.hidden = hide || !fun.length; if (sec.hidden) return;
+    var listed = {};
+    GROUPS.forEach(function (g) {
+      var items = [];
+      g.ids.forEach(function (id) { listed[id] = 1; fun.forEach(function (c) { if (c.gameId === id) items.push(tile(c)); }); });
+      if (items.length) body.appendChild(shelf({ id: g.id, label: g.label, cap: g.cap, items: items }));
+    });
+    var rest = fun.filter(function (c) { return !listed[c.gameId]; }).sort(function (a, b) { return a.title.localeCompare(b.title); });
+    if (rest.length) body.appendChild(shelf({ id: 'more', label: 'More games', cap: 'Even more to try.', items: rest.map(tile) }));
+  }
+  function renderSkeleton() {
+    $('jump').hidden = false;
+    var jb = $('jumpBody'); clear(jb);
+    var sc = el('div', 'scroller'), ul = el('ul', 'row cards'); sc.setAttribute('aria-hidden', 'true');
+    for (var i = 0; i < 3; i++) { var li = el('li'); li.appendChild(el('div', 'skel-card')); ul.appendChild(li); }
+    sc.appendChild(ul); jb.appendChild(sc);
+    var pb = $('playBody'); clear(pb); pb.appendChild(skelShelf(6));
+  }
+
+  /* ---------- Learn ---------- */
+  function buildChips() {
+    var box = $('years'); clear(box);
+    years.forEach(function (y) {
+      var b = el('button', 'chip'); b.type = 'button'; b.setAttribute('data-year', String(y));
+      b.appendChild(icon('check', 20, 'chk')); b.appendChild(document.createTextNode(yearName(y)));
+      b.addEventListener('click', function () {
+        state.year = state.year === String(y) ? '' : String(y); state.topic = '';
+        if (state.type === 'fun') state.type = '';
+        update();
+      });
+      box.appendChild(b);
+    });
+    var sb = $('subj'); clear(sb);
+    [['maths', 'Maths', 'maths'], ['english', 'English', 'english'], ['', 'Both', 'both']].forEach(function (s) {
+      var b = el('button'); b.type = 'button'; b.setAttribute('data-subject', s[0]);
+      b.appendChild(icon(s[2], 24)); b.appendChild(document.createTextNode(s[1])); b.appendChild(icon('check', 20, 'chk'));
+      b.addEventListener('click', function () { state.subject = s[0]; if (state.type === 'fun') state.type = ''; update(); });
+      sb.appendChild(b);
+    });
+  }
+  function fillSelect(sel, groups, any, value) {
+    clear(sel); sel.appendChild(new Option(any, ''));
+    groups.forEach(function (g) {
+      var og = document.createElement('optgroup'); og.label = g.label;
+      g.options.forEach(function (o) { og.appendChild(new Option(o.label, o.value)); });
+      sel.appendChild(og);
+    });
+    sel.value = value; if (sel.value !== value) sel.value = '';
+    sel.disabled = groups.length === 0;
+    return sel.value;
+  }
+  function renderSelects() {
     var learn = cards.filter(function (c) { return c.kind === 'learn'; });
-    var years = Array.from(new Set(learn.map(function (c) { return c.year; }))).sort(function (a, b) { return a - b; });
-    fillSelect($('year'), years.map(function (y) { return { label: yearName(y), value: String(y) }; }), 'Any year', state.year);
-    // Topics: those of the chosen year, otherwise every topic (a topic name can appear in several years).
-    var pool = learn.filter(function (c) { return !state.year || String(c.year) === state.year; });
-    var seen = {}, bySubject = {};
+    var pool = learn.filter(function (c) { return (!state.year || String(c.year) === state.year) && (!state.subject || c.subject === state.subject); });
+    var seen = {}, bySub = {};
     pool.forEach(function (c) {
-      var key = c.subject + '|' + c.topic;
-      if (seen[key]) return; seen[key] = 1;
-      (bySubject[c.subject] = bySubject[c.subject] || []).push({ label: c.title, value: key });
+      var k = c.subject + '|' + c.topic; if (seen[k]) return; seen[k] = 1;
+      (bySub[c.subject] = bySub[c.subject] || []).push({ label: c.title, value: k });
     });
-    var groups = Object.keys(bySubject).sort().map(function (s) { return { group: cap(s), options: bySubject[s] }; });
-    fillSelect($('topic'), groups, 'Any topic', state.topic);
-    if (!state.topic) { /* keep */ } else if ($('topic').value !== state.topic) { state.topic = ''; }
-    var games = [], seenG = {};
-    // Quick quiz first, then the other Learn games, then the Fun games, each once.
-    cards.filter(function (c) { return c.kind === 'learn' && c.gameId === 'quick_quiz'; }).slice(0, 1).forEach(function (c) { seenG[c.gameId] = 1; games.push({ label: c.game, value: c.gameId }); });
-    var others = [];
-    cards.forEach(function (c) {
-      if (seenG[c.gameId]) return; seenG[c.gameId] = 1;
-      others.push({ label: c.kind === 'learn' ? c.game : c.title, value: c.gameId, kind: c.kind });
-    });
-    others.sort(function (a, b) { return (a.kind === b.kind ? 0 : a.kind === 'learn' ? -1 : 1) || a.label.localeCompare(b.label); });
-    games = games.concat(others);
-    fillSelect($('game'), games, 'Any game', state.game);
+    var tg = Object.keys(bySub).sort().map(function (s) { bySub[s].sort(function (a, b) { return a.label.localeCompare(b.label); }); return { label: cap(s), options: bySub[s] }; });
+    state.topic = fillSelect($('topic'), tg, 'Any topic', state.topic);
+    var lg = [], fg = [], sg = {};
+    learn.forEach(function (c) { if (sg[c.gameId]) return; sg[c.gameId] = 1; lg.push({ label: c.game, value: c.gameId }); });
+    lg.sort(function (a, b) { return (a.value === 'quick_quiz' ? -1 : b.value === 'quick_quiz' ? 1 : 0) || a.label.localeCompare(b.label); });
+    funCards().forEach(function (c) { if (!sg[c.gameId]) { sg[c.gameId] = 1; fg.push({ label: c.title, value: c.gameId }); } });
+    fg.sort(function (a, b) { return a.label.localeCompare(b.label); });
+    var gg = []; if (lg.length) gg.push({ label: 'Learn games', options: lg }); if (fg.length) gg.push({ label: 'Play games', options: fg });
+    state.game = fillSelect($('game'), gg, 'Any game', state.game);
   }
-
-  function matches(c) {
-    if (state.type !== 'all' && c.kind !== state.type) return false;
-    if (state.game && c.gameId !== state.game) return false;
-    if (c.kind === 'fun') return !state.year && !state.topic;      // fun games have no year or topic
-    // The other Learn games (minigames) only show when picked in the Game filter; the default is one Quick quiz per topic.
-    if (c.gameId !== 'quick_quiz' && state.game !== c.gameId) return false;
-    if (state.year && String(c.year) !== state.year) return false;
-    if (state.topic && (c.subject + '|' + c.topic) !== state.topic) return false;
-    return true;
+  function learnCards() {
+    var wantGame = state.game && state.game !== 'quick_quiz' ? state.game : 'quick_quiz';
+    return cards.filter(function (c) {
+      if (c.kind !== 'learn' || c.gameId !== wantGame) return false;
+      if (state.year && String(c.year) !== state.year) return false;
+      if (state.subject && c.subject !== state.subject) return false;
+      if (state.topic && c.subject + '|' + c.topic !== state.topic) return false;
+      return true;
+    }).sort(function (a, b) { return a.year - b.year || a.title.localeCompare(b.title); });
   }
-
-  function card(c) {
-    var li = el('li'), a = el('a', 'card'); a.href = c.link;
-    var img = el('img', 'art'); img.src = '_site/art/' + c.art + '.svg'; img.alt = ''; img.width = 56; img.height = 56; img.loading = 'lazy';
-    var box = el('span');
-    box.appendChild(el('b', null, c.title));
-    var meta = el('span', 'meta');
-    if (c.kind === 'learn') {
-      var t = el('span', 'tag learn', 'Learn'); meta.appendChild(t);
-      meta.appendChild(document.createTextNode(' · ' + cap(c.subject) + ' · ' + yearName(c.year) + ' · ' + c.game));
-    } else {
-      meta.appendChild(el('span', 'tag fun', 'Fun'));
-      meta.appendChild(document.createTextNode(' · from ' + c.from));
+  function renderLearn() {
+    var sec = $('learn'), tg = $('tg'); tg.hidden = true;
+    var hasLearn = cards.some(function (c) { return c.kind === 'learn'; });
+    sec.hidden = !cards.length || state.type === 'fun' || !hasLearn;
+    if (sec.hidden) return;
+    document.querySelectorAll('#years .chip').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-year') === state.year ? 'true' : 'false'); });
+    document.querySelectorAll('#subj button').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-subject') === state.subject ? 'true' : 'false'); });
+    renderSelects();
+    var out = $('lout'), stat = $('lstat'); clear(out);
+    var miniGame = state.game && state.game !== 'quick_quiz';
+    var selected = state.year !== '' || state.topic || state.game;
+    if (!selected) {
+      stat.textContent = '';
+      out.appendChild(panel('calendar', 'Pick a year', 'Choose a year above to see maths and English topics.'));
+      return;
     }
-    box.appendChild(meta); a.appendChild(img); a.appendChild(box); li.appendChild(a);
-    a.setAttribute('aria-label', c.kind === 'learn'
-      ? 'Learn: ' + c.title + ', ' + cap(c.subject) + ', ' + yearName(c.year) + ', ' + c.game
-      : 'Fun game: ' + c.title);
-    return li;
-  }
-
-  function section(title, list) {
-    var wrap = el('section');
-    if (title) wrap.appendChild(el('h2', null, title));
-    var ul = el('ul', 'grid'); list.forEach(function (c) { ul.appendChild(card(c)); });
-    wrap.appendChild(ul); return wrap;
-  }
-
-  function render() {
-    var yearOn = state.type !== 'fun', funOnly = state.type === 'fun';
-    $('year').disabled = funOnly; $('topic').disabled = funOnly;
-    if (funOnly) { state.year = ''; state.topic = ''; }
-    buildSelects();
-    $('year').disabled = funOnly; $('topic').disabled = funOnly;
-    var shown = cards.filter(matches);
-    var fun = shown.filter(function (c) { return c.kind === 'fun'; });
-    var learn = shown.filter(function (c) { return c.kind === 'learn'; });
-    var res = $('results'); res.textContent = '';
-    if (!shown.length) {
-      var e = el('div', 'empty'); e.appendChild(el('p', null, 'No games match these choices yet.'));
-      var b = el('button', 'clear', 'Clear filters'); b.type = 'button'; b.addEventListener('click', clearAll); e.appendChild(b);
-      res.appendChild(e);
-    } else {
-      var both = fun.length && learn.length;
-      if (fun.length) res.appendChild(section(both ? 'Fun games' : '', fun));
-      if (learn.length) res.appendChild(section(both ? 'Learn' : '', learn));
+    var list = learnCards();
+    var yl = state.year !== '' ? yearName(parseInt(state.year, 10)) : 'every year';
+    var sl = state.subject === 'maths' ? 'Maths' : state.subject === 'english' ? 'English' : 'Maths and English';
+    stat.textContent = list.length ? plural(list.length, miniGame ? 'game' : 'topic', miniGame ? 'games' : 'topics') + ' for ' + yl + ', ' + sl : '';
+    if (!list.length) {
+      out.appendChild(panel('book', 'No topics here yet', 'Try Both, or another year.', state.subject ? 'Show both' : '', function () { state.subject = ''; update(); }));
+      return;
     }
-    $('count').textContent = shown.length + (shown.length === 1 ? ' game' : ' games');
-    document.getElementById(state.type === 'all' ? 't-all' : state.type === 'learn' ? 't-learn' : 't-fun').checked = true;
-    void yearOn; writeUrl();
-  }
-
-  function clearAll() { state = { type: 'all', year: '', topic: '', game: '' }; render(); }
-
-  function wire() {
-    document.querySelectorAll('input[name=type]').forEach(function (r) {
-      r.addEventListener('change', function () { state.type = r.value; render(); });
+    if (miniGame) {
+      var tb = $('tgBody'); clear(tb);
+      tb.appendChild(shelf({ id: 'tg', label: 'Games for your topics', cap: 'Games that match your topic filter.', items: list.map(tile) }));
+      tg.hidden = false; return;
+    }
+    var capLine = state.year !== '' ? 'Topics for ' + yl + '.' : 'Topics for every year.';
+    ['maths', 'english'].forEach(function (s) {
+      var part = list.filter(function (c) { return c.subject === s; }); if (!part.length) return;
+      out.appendChild(shelf({ id: s, label: cap(s), cap: capLine, items: part.map(tile) }));
     });
-    $('year').addEventListener('change', function () { state.year = this.value; state.topic = ''; render(); });
-    $('topic').addEventListener('change', function () { state.topic = this.value; render(); });
-    $('game').addEventListener('change', function () { state.game = this.value; render(); });
-    $('clear').addEventListener('click', clearAll);
   }
 
-  readUrl(); wire();
-  fetch('catalog.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (d) {
-    cards = d.cards || []; render();
-  }).catch(function () {
-    $('results').appendChild(el('p', 'empty', 'The game list could not be loaded. Please try again.'));
+  /* ---------- Search ---------- */
+  function hay(c) {
+    if (!c._h) c._h = [c.title, c.subject || '', (c.topic || '').replace(/_/g, ' '), c.game || '', c.from || '', c.kind === 'fun' ? 'play fun' : 'learn'].join(' ').toLowerCase();
+    return c._h;
+  }
+  function searchCards(q) {
+    q = q.toLowerCase().trim();
+    var yr = null;
+    q = q.replace(/\byear\s*(\d{1,2})\b/, function (m, n) { yr = parseInt(n, 10); return ' '; });
+    if (/\bfoundation\b/.test(q)) { yr = 0; q = q.replace(/\bfoundation\b/, ' '); }
+    var toks = q.split(/\s+/).filter(Boolean);
+    var res = cards.filter(function (c) {
+      if (yr !== null && (c.kind !== 'learn' || c.year !== yr)) return false;
+      var h = hay(c);
+      return toks.every(function (t) { return h.indexOf(t) >= 0; });
+    });
+    res.sort(function (a, b) {
+      return (a.kind === b.kind ? 0 : a.kind === 'fun' ? -1 : 1) || ((isQuiz(b) ? 1 : 0) - (isQuiz(a) ? 1 : 0)) || ((a.year || 0) - (b.year || 0)) || a.title.localeCompare(b.title);
+    });
+    return res;
+  }
+  function renderSearch() {
+    var out = $('rout'), stat = $('rstat'); clear(out);
+    var list = searchCards(state.q), qq = state.q.trim();
+    if (!list.length) {
+      stat.textContent = 'No games match';
+      out.appendChild(panel('search', 'No games match', 'Try a shorter word, like snake or fractions.', 'Clear search', function () { setQuery('', true); }));
+      return;
+    }
+    stat.textContent = plural(list.length, 'result', 'results') + ' for ' + qq;
+    out.appendChild(grid(list.slice(0, searchLimit), tile));
+    if (list.length > searchLimit) {
+      out.appendChild(showMore(function () {
+        var first = searchLimit; searchLimit += CAP; renderSearch();
+        var tiles = $('rout').querySelectorAll('a.tile'); if (tiles[first]) tiles[first].focus();
+      }));
+    }
+  }
+  function setQuery(v, focus) {
+    $('q').value = v; state.q = v; searchLimit = CAP; update(); if (focus) $('q').focus();
+  }
+  $('q').addEventListener('input', function () {
+    var v = this.value; clearTimeout(debounce);
+    debounce = setTimeout(function () { state.q = v; searchLimit = CAP; update(); }, 80);
+    $('qclear').hidden = v === '';
   });
+  $('q').addEventListener('keydown', function (e) { if (e.key === 'Escape' && this.value) { e.preventDefault(); setQuery('', false); } });
+  $('qclear').addEventListener('click', function () { setQuery('', true); });
+
+  /* ---------- update ---------- */
+  function paintBar() {
+    $('b-maths').setAttribute('aria-pressed', state.subject === 'maths' ? 'true' : 'false');
+    $('b-english').setAttribute('aria-pressed', state.subject === 'english' ? 'true' : 'false');
+  }
+  function update() {
+    writeUrl(); paintBar();
+    $('qclear').hidden = $('q').value === '';
+    if (!loaded) return;
+    var searching = state.q.trim() !== '';
+    $('shelves').hidden = searching; $('hero').hidden = searching; $('results').hidden = !searching;
+    if (searching) { renderSearch(); return; }
+    renderRecent(); renderPlay(); renderLearn(); updateArrows();
+  }
+  function clearFilters() {
+    state.type = ''; state.year = ''; state.subject = ''; state.topic = ''; state.game = ''; update();
+  }
+  $('clearAll').addEventListener('click', clearFilters);
+
+  /* ---------- bar actions ---------- */
+  function jump(id) {
+    var h = $(id); if (!h) return;
+    h.scrollIntoView(); try { h.focus({ preventScroll: true }); } catch (e) { h.focus(); }
+  }
+  function leaveSearch() { if (state.q) { $('q').value = ''; state.q = ''; } }
+  function subjectJump(s) {
+    leaveSearch(); state.subject = s; if (state.type === 'fun') state.type = ''; update(); jump('learnH');
+  }
+  $('b-maths').addEventListener('click', function () { subjectJump('maths'); });
+  $('b-english').addEventListener('click', function () { subjectJump('english'); });
+  $('b-play').addEventListener('click', function () {
+    leaveSearch(); if (state.type === 'learn') state.type = ''; state.topic = ''; state.game = '';
+    update(); jump('playH');
+  });
+  $('b-recent').addEventListener('click', function () { leaveSearch(); update(); jump('recentH'); });
+  $('b-surprise').addEventListener('click', function () { leaveSearch(); surprise(); });
+  $('topic').addEventListener('change', function () { state.topic = this.value; update(); });
+  $('game').addEventListener('change', function () { state.game = this.value; update(); });
+
+  /* ---------- load ---------- */
+  function setDisabled(d) { ['b-maths', 'b-english', 'b-play', 'b-recent', 'b-surprise'].forEach(function (id) { $(id).disabled = d; }); }
+  function load() {
+    $('err').hidden = true; $('shelves').hidden = false; $('main').setAttribute('aria-busy', 'true');
+    setDisabled(true); $('w-recent').hidden = true;
+    $('recent').hidden = true; $('learn').hidden = true; $('tg').hidden = true; $('play').hidden = false;
+    renderSkeleton();
+    fetch('catalog.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('http'); return r.json(); }).then(function (d) {
+      cards = Array.isArray(d.cards) ? d.cards : []; byId = {};
+      cards.forEach(function (c) { byId[c.id] = c; });
+      var ys = {}; cards.forEach(function (c) { if (c.kind === 'learn' && typeof c.year === 'number') ys[c.year] = 1; });
+      years = Object.keys(ys).map(Number).sort(function (a, b) { return a - b; });
+      buildChips(); loaded = true; $('main').setAttribute('aria-busy', 'false');
+      setDisabled(false); $('b-surprise').disabled = !cards.length;
+      if (state.topic || state.game) $('more').open = true;
+      $('q').value = state.q;
+      update();
+    }).catch(function () {
+      loaded = false; $('main').setAttribute('aria-busy', 'false');
+      $('shelves').hidden = true; $('results').hidden = true; $('err').hidden = false;
+    });
+  }
+  $('retry').addEventListener('click', load);
+
+  readUrl(); $('q').value = state.q; $('qclear').hidden = state.q === ''; paintBar();
+  load();
 })();
 </script>
 </body>

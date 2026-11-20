@@ -1,3 +1,5 @@
 dist/
 .dart_tool/
 build/
+.dev-server.pid
+.watch-stamp

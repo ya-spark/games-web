@@ -13,6 +13,25 @@ Rules of the web product (owner, 2026-11-15): no coins, no shop, no purchases, n
   overlay on top, and builds the web bundle into `dist/<slug>/` (not committed). The app checkout
   is not modified.
 
+## Running it on your laptop
+
+Needs Flutter (the version in game-factory's `.flutter-version`), Python 3, and the app checkouts. Inside the
+`game-studio` checkout they are in `../apps`; elsewhere set `APPS_DIR` to a folder holding the app repos.
+
+| Script | What it does |
+|---|---|
+| `scripts/setup.sh` | Checks tools and app checkouts (`CLONE=1` clones missing app repos; they are private). |
+| `scripts/run.sh [slug ...]` | Builds the games (default: all) and the landing page into `dist/`, then serves at `http://localhost:8080/`. |
+| `scripts/build.sh [slug ...]` | Build only (`--site` redoes just the landing page and `catalog.json`, no Flutter build). |
+| `scripts/serve.sh` | Serve what is in `dist/` (`PORT`, `HOST`, `NO_OPEN=1`). |
+| `scripts/stop.sh`, `scripts/restart.sh` | Stop the server; stop and run again. |
+
+A web release build takes a few minutes per game and there is no Flutter hot reload. `WATCH=1 scripts/run.sh [slug ...]`
+(`scripts/watch.sh`) is the next best thing: it serves, rebuilds what changed (`site/` alone takes seconds; `overlay/` or an app
+checkout rebuilds those games) and reloads the open page when the build is ready. Without it, run again after a change
+(`SITE_ONLY=1 scripts/run.sh` for edits under `site/`, `NO_BUILD=1 scripts/run.sh` to just serve). Locally the games are served from `/<slug>/`, not
+`/games/<slug>/`; the deploy builds with the real path.
+
 ## The landing page (`site/`)
 
 `site/index.html` is plain HTML and JavaScript (no Flutter): filters Learn / Fun, Year, Topic and Game over `catalog.json`.
