@@ -133,6 +133,8 @@ void main() {
   testWidgets('I know this opens the check before anything is marked known', (tester) async {
     final state = WebState();
     await _pump(tester, state, year: 3);
+    await tester.ensureVisible(find.byKey(const Key('web.bar.known'))); // the bar scrolls sideways when it is full
+    await tester.pump();
     await tester.tap(find.byKey(const Key('web.bar.known')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('web.prove.intro')), findsOneWidget);
@@ -154,9 +156,10 @@ void main() {
     expect(state.statusOf('maths/3/alpha'), TopicStatus.fresh); // nothing was played
   });
 
-  testWidgets('the Game button shows the name of the game on screen', (tester) async {
+  testWidgets('the Game button shows "Game: <name>" for the game on screen', (tester) async {
     final state = WebState();
     await _pump(tester, state, year: 3);
-    expect(tester.widget<Text>(find.byKey(const Key('web.bar.gameName'))).data, 'Learn');
+    expect(find.byKey(const Key('web.bar.gameLabel')), findsOneWidget);
+    expect(tester.widget<Text>(find.byKey(const Key('web.bar.gameName'))).data, ': Learn');
   });
 }

@@ -68,7 +68,7 @@ class GameMenuButton extends StatelessWidget {
   });
   final WebCatalog catalog;
 
-  /// The name of the game on screen, shown on the button ("Game" when not known).
+  /// The name of the game on screen, shown after the word "Game" on the button.
   final String? currentTitle;
   final int? year;
   final String currentSlug;
@@ -109,10 +109,12 @@ class GameMenuButton extends StatelessWidget {
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           const Icon(Icons.sports_esports_outlined, size: 18),
           const SizedBox(width: 6),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 180),
-            child: Text(currentTitle ?? 'Game', key: const Key('web.bar.gameName'), overflow: TextOverflow.ellipsis),
-          ),
+          const Text('Game', key: Key('web.bar.gameLabel')),
+          if (currentTitle != null)
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 180),
+              child: Text(': $currentTitle', key: const Key('web.bar.gameName'), overflow: TextOverflow.ellipsis),
+            ),
           const Icon(Icons.arrow_drop_down, size: 18),
         ]),
       ),
