@@ -11,7 +11,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
 slugs=("$@")
 [ "${#slugs[@]}" -gt 0 ] || while read -r s; do slugs+=("$s"); done < <(all_slugs)
 POLL="${POLL:-2}"
-STAMP="$ROOT_DIR/.watch-stamp"
+STAMP="$(mktemp)"   # private to this run, so another run or stop.sh cannot delete it
 
 # The page polls /__reload and reloads itself when the stamp changes. Local dist/ only, never deployed.
 SNIPPET='<script>/*dev-reload*/(function(){var l;setInterval(function(){fetch("/__reload",{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){if(l&&t!==l)location.reload();l=t}).catch(function(){})},1000)})();</script>'
@@ -46,7 +46,7 @@ fi
 NO_OPEN_SET="${NO_OPEN:-}"
 NO_OPEN="$NO_OPEN_SET" bash "$ROOT_DIR/scripts/serve.sh" &
 SERVER=$!
-trap 'kill $SERVER 2>/dev/null; rm -f "$STAMP" "$PID_FILE"; exit 0' INT TERM EXIT
+trap 'kill $SERVER 2>/dev/null; rm -f "$STAMP"; exit 0' INT TERM EXIT
 echo "Watching site/, overlay/ and the app checkouts for: ${slugs[*]}  (Ctrl+C to stop)"
 
 while kill -0 "$SERVER" 2>/dev/null; do
