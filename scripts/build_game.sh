@@ -65,5 +65,16 @@ fi
 # build-info.json: which commits this build came from (served at <base>/build-info.json and shown on the /games/ index).
 printf '{"slug":"%s","app":"%s","appCommit":"%s","gamesWebCommit":"%s","builtAt":"%s"}\n' \
   "$SLUG" "$REPO" "$APP_SHA" "$WEB_SHA" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > build/web/build-info.json
+# Version badge: a tiny fixed label on the game page (app commit, site commit) so what is deployed can be checked at a glance.
+python3 - "$TMP/app/build/web/index.html" "${APP_SHA:0:7}" "${WEB_SHA:0:7}" <<'PY'
+import sys
+p, a, w = sys.argv[1:4]
+s = open(p).read()
+tag = ('<div id="build-version" aria-hidden="true" style="position:fixed;left:6px;bottom:4px;z-index:2147483647;'
+       'pointer-events:none;font:10px/1 monospace;color:#fff;background:rgba(0,0,0,.45);padding:2px 5px;border-radius:4px">'
+       'v ' + a + ' / ' + w + '</div>')
+assert '</body>' in s
+open(p, 'w').write(s.replace('</body>', tag + '</body>', 1))
+PY
 rm -rf "$OUT"; mkdir -p "$(dirname "$OUT")"; cp -R build/web "$OUT"
 echo "Built $SLUG into $OUT"
