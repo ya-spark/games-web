@@ -52,7 +52,7 @@ year and the first topic not marked known.
 
 Every Craft game plays every year and topic: `build_game.sh` runs `scripts/merge_craft_content.py`, which copies the free
 packs and topics of the other Craft apps into the temporary copy of the app (nothing is committed here; the checkouts are
-never changed). A game with too few questions for a topic falls back to that topic's Quick quiz with a short note.
+never changed). A game with too few questions for a topic says so and proposes the games that can run it (never the Quick quiz).
 
 Inside a game the thin bar (`overlay/common/.../web_rules.dart`, `web_bar.dart`) has Year, Game, Topic, "I know this", Learn
 and Rules. A topic is new, practising or known; known applies in every game, is reached by a 5-question check (4 right to

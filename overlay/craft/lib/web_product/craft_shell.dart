@@ -44,16 +44,24 @@ class WebLinkLaunch {
 
 /// One round on screen: the game, its session and the topic it plays (null topic = a mixed round of [mixed]).
 class _Round {
-  _Round(this.game, this.session, this.topic, this.mixed, this.epoch, this.note);
+  _Round(this.game, this.session, this.topic, this.mixed, this.epoch);
   final MiniGame game;
   final QuizSession session;
   final TopicRef? topic;
   final String? mixed;
   final int epoch;
-  final String? note;
 }
 
-enum _Screen { playing, needYear, allDone, ended, empty }
+enum _Screen { playing, needYear, allDone, ended, empty, unsupported }
+
+/// A game that has no questions for the chosen topic, and the games that do (proposed instead; never the Quick quiz).
+class _Unsupported {
+  const _Unsupported(this.game, this.topic, this.mixed, this.alternatives);
+  final MiniGame game;
+  final TopicRef? topic;
+  final String? mixed;
+  final List<MiniGame> alternatives;
+}
 
 /// The whole web home of a Craft build: the thin bar (year, game, topic, I know this, Learn, rules) over the game.
 class CraftShell extends StatefulWidget {
@@ -88,6 +96,7 @@ class _CraftShellState extends State<CraftShell> {
   final String _slug = currentWebSlug();
   _Screen _screen = _Screen.playing;
   _Round? _round;
+  _Unsupported? _unsupported;
   String _gameId = _quiz;
   int _epoch = 0;
   String? _message;
@@ -210,11 +219,23 @@ class _CraftShellState extends State<CraftShell> {
     var game = _gameFor(gameId);
     final subject = t?.subject ?? mixed!;
     var session = _session(game, subject, year, t?.id);
-    String? note;
     if (session == null && game.id != quickQuizGame.id) {
-      note = 'There are not enough questions for ${game.title} on this topic yet, so this is the Quick quiz.';
-      game = quickQuizGame;
-      session = _session(game, subject, year, t?.id);
+      // No Quick quiz here: propose the games that can run this topic instead.
+      final alts = <MiniGame>[
+        for (final e in appGames.entries)
+          if (e.game.access != GameAccess.coins &&
+              e.game.id != quickQuizGame.id &&
+              e.game.id != game.id &&
+              e.modes?.contains(MiniGameMode.game) != false &&
+              _session(e.game, subject, year, t?.id) != null)
+            e.game,
+      ];
+      setState(() {
+        _gameId = gameId;
+        _screen = _Screen.unsupported;
+        _unsupported = _Unsupported(game, t, mixed, alts);
+      });
+      return;
     }
     if (session == null) {
       setState(() {
@@ -233,11 +254,11 @@ class _CraftShellState extends State<CraftShell> {
     setState(() {
       _gameId = game.id;
       _screen = _Screen.playing;
-      _round = _Round(game, session!, t, mixed, ++_epoch, note);
+      _round = _Round(game, session, t, mixed, ++_epoch);
     });
   }
 
-  TopicRef? get _current => _round?.topic;
+  TopicRef? get _current => _screen == _Screen.unsupported ? _unsupported?.topic : _round?.topic;
 
   void _toggleKnown(TopicRef t) {
     final s = widget.state;
@@ -433,6 +454,26 @@ class _CraftShellState extends State<CraftShell> {
             ],
           ),
         );
+      case _Screen.unsupported:
+        final u = _unsupported!;
+        final topicName = u.topic?.title ?? 'this topic';
+        return _Centered(
+          title: '${u.game.title} has no questions for $topicName yet',
+          text: u.alternatives.isEmpty ? 'Try another topic, or use Learn.' : 'Try one of these games instead:',
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: [
+              for (var i = 0; i < u.alternatives.length; i++)
+                (i == 0 ? FilledButton.new : OutlinedButton.new)(
+                  key: Key('web.alt.${u.alternatives[i].id}'),
+                  onPressed: () => _begin(u.alternatives[i].id, topic: u.topic, mixed: u.mixed),
+                  child: Text(u.alternatives[i].title),
+                ),
+            ],
+          ),
+        );
       case _Screen.empty:
         return _Centered(title: 'Nothing to play here yet', text: _message);
       case _Screen.ended:
@@ -472,15 +513,6 @@ class _CraftShellState extends State<CraftShell> {
         final isQuiz = r.game.id == quickQuizGame.id;
         return Column(
           children: [
-            if (r.note != null)
-              Material(
-                key: const Key('web.note'),
-                color: Theme.of(context).colorScheme.secondaryContainer,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: SizedBox(width: double.infinity, child: Text(r.note!)),
-                ),
-              ),
             Expanded(
               child: KeyedSubtree(
                 key: ValueKey('round.${r.epoch}'),

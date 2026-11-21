@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:APP_PKG/core/services.dart';
 import 'package:APP_PKG/engine/engine.dart';
+import 'package:APP_PKG/ui/game_registry.dart';
+import 'package:APP_PKG/ui/quick_quiz_screen.dart';
 import 'package:APP_PKG/web_product/craft_shell.dart';
 import 'package:APP_PKG/web_product/web_state_model.dart';
 import 'helpers/fake_services.dart';
@@ -37,7 +39,8 @@ maths:
 ''';
 
 class _Harness extends StatefulWidget {
-  const _Harness({required this.services, required this.state, this.year});
+  const _Harness({required this.services, required this.state, this.year, this.launch = WebLinkLaunch.none});
+  final WebLinkLaunch launch;
   final Services services;
   final WebState state;
   final int? year;
@@ -65,7 +68,7 @@ class _HarnessState extends State<_Harness> {
           years: const [3, 4],
           year: year,
           onYear: (y) => setState(() => year = y),
-          launch: WebLinkLaunch.none,
+          launch: widget.launch,
           state: widget.state,
         ),
       ),
@@ -73,12 +76,12 @@ class _HarnessState extends State<_Harness> {
   }
 }
 
-Future<void> _pump(WidgetTester tester, WebState state, {int? year}) async {
+Future<void> _pump(WidgetTester tester, WebState state, {int? year, WebLinkLaunch launch = WebLinkLaunch.none}) async {
   tester.view.physicalSize = const Size(900, 1400);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   final s = await buildFakeServices(contentEnabled: true);
-  await tester.pumpWidget(_Harness(services: s, state: state, year: year));
+  await tester.pumpWidget(_Harness(services: s, state: state, year: year, launch: launch));
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 100));
 }
@@ -134,5 +137,19 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('web.prove.intro')), findsOneWidget);
     expect(state.statusOf('maths/3/alpha'), TopicStatus.practising);
+  });
+
+  testWidgets('a game with no questions for the topic proposes other games, not the Quick quiz', (tester) async {
+    // The test topics hold only multiple-choice items, so a free game that does not play them cannot run.
+    final blocked = appGames.entries.firstWhere((e) =>
+        e.game.access != GameAccess.coins &&
+        e.game.id != quickQuizGame.id &&
+        !e.game.itemTypes.contains(ItemType.mcq));
+    final state = WebState();
+    await _pump(tester, state,
+        year: 3, launch: WebLinkLaunch(gameId: blocked.game.id, subject: 'maths', year: 3, topic: 'alpha'));
+    expect(find.textContaining('has no questions for Alpha topic yet'), findsOneWidget);
+    expect(find.byKey(const Key('web.note')), findsNothing);
+    expect(state.statusOf('maths/3/alpha'), TopicStatus.fresh); // nothing was played
   });
 }
