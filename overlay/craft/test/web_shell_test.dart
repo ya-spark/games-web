@@ -150,6 +150,13 @@ void main() {
         year: 3, launch: WebLinkLaunch(gameId: blocked.game.id, subject: 'maths', year: 3, topic: 'alpha'));
     expect(find.textContaining('has no questions for Alpha topic yet'), findsOneWidget);
     expect(find.byKey(const Key('web.note')), findsNothing);
+    expect(find.byType(Card), findsWidgets); // the proposals are cards with art, like the home page
     expect(state.statusOf('maths/3/alpha'), TopicStatus.fresh); // nothing was played
+  });
+
+  testWidgets('the Game button shows the name of the game on screen', (tester) async {
+    final state = WebState();
+    await _pump(tester, state, year: 3);
+    expect(tester.widget<Text>(find.byKey(const Key('web.bar.gameName'))).data, 'Learn');
   });
 }

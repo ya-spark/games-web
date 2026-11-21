@@ -64,8 +64,12 @@ class GameMenuButton extends StatelessWidget {
     required this.currentGameId,
     required this.onPick,
     this.onLearn,
+    this.currentTitle,
   });
   final WebCatalog catalog;
+
+  /// The name of the game on screen, shown on the button ("Game" when not known).
+  final String? currentTitle;
   final int? year;
   final String currentSlug;
   final String currentGameId;
@@ -100,13 +104,16 @@ class GameMenuButton extends StatelessWidget {
           ),
         ],
       ],
-      child: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.sports_esports_outlined, size: 18),
-          SizedBox(width: 6),
-          Text('Game'),
-          Icon(Icons.arrow_drop_down, size: 18),
+          const Icon(Icons.sports_esports_outlined, size: 18),
+          const SizedBox(width: 6),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 180),
+            child: Text(currentTitle ?? 'Game', key: const Key('web.bar.gameName'), overflow: TextOverflow.ellipsis),
+          ),
+          const Icon(Icons.arrow_drop_down, size: 18),
         ]),
       ),
     );
@@ -239,9 +246,13 @@ class CatalogGameMenu extends StatefulWidget {
     required this.onPickHere,
     this.onLearnHere,
     this.topic,
+    this.currentTitle,
   });
   final String currentSlug;
   final String currentGameId;
+
+  /// The name of the game on screen (the button shows it).
+  final String? currentTitle;
 
   /// The games of this build, used until (or if) the catalog cannot be read.
   final List<CatalogGame> fallback;
@@ -278,6 +289,7 @@ class _CatalogGameMenuState extends State<CatalogGameMenu> {
       year: widget.year,
       currentSlug: widget.currentSlug,
       currentGameId: widget.currentGameId,
+      currentTitle: widget.currentTitle,
       onPick: (g) {
         if (g.slug == widget.currentSlug) {
           widget.onPickHere(g);

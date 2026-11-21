@@ -200,6 +200,7 @@ class _MindGameScreenState extends State<MindGameScreen> {
         CatalogGameMenu(
           currentSlug: _slug,
           currentGameId: _id,
+          currentTitle: g.title,
           year: loadWebState().year,
           fallback: [
             for (final e in widget.games.entries)

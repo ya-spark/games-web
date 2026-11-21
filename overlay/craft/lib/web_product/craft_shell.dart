@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import '../core/services.dart';
 import '../engine/engine.dart';
 import '../ui/game_registry.dart';
+import '../ui/kit/ds_art.dart';
 import '../ui/quick_quiz_screen.dart';
 import 'web_bar.dart';
 import 'web_catalog.dart';
@@ -372,16 +373,17 @@ class _CraftShellState extends State<CraftShell> {
           CatalogGame(slug: _slug, gameId: e.game.id, title: e.game.title, from: widget.services.config.displayName, kind: 'craft'),
     ];
     return [
-      YearButton(year: year, years: widget.years, onPick: widget.onYear),
       CatalogGameMenu(
         currentSlug: _slug,
         currentGameId: _gameId,
+        currentTitle: _gameId == _quiz ? 'Learn' : _gameFor(_gameId).title,
         fallback: fallback,
         year: year,
         topic: cur == null ? null : (subject: cur.subject, year: cur.year, topic: cur.id),
         onPickHere: (g) => _begin(g.gameId, topic: cur, mixed: _round?.mixed),
         onLearnHere: () => _begin(_quiz, topic: cur, mixed: _round?.mixed),
       ),
+      YearButton(year: year, years: widget.years, onPick: widget.onYear),
       TopicButton(
         topics: topics,
         state: widget.state,
@@ -465,11 +467,11 @@ class _CraftShellState extends State<CraftShell> {
             runSpacing: 8,
             alignment: WrapAlignment.center,
             children: [
-              for (var i = 0; i < u.alternatives.length; i++)
-                (i == 0 ? FilledButton.new : OutlinedButton.new)(
-                  key: Key('web.alt.${u.alternatives[i].id}'),
-                  onPressed: () => _begin(u.alternatives[i].id, topic: u.topic, mixed: u.mixed),
-                  child: Text(u.alternatives[i].title),
+              for (final g in u.alternatives)
+                _GameCard(
+                  key: Key('web.alt.${g.id}'),
+                  game: g,
+                  onTap: () => _begin(g.id, topic: u.topic, mixed: u.mixed),
                 ),
             ],
           ),
@@ -568,6 +570,40 @@ class _Centered extends StatelessWidget {
               if (text != null) ...[const SizedBox(height: 8), Text(text!, textAlign: TextAlign.center)],
               if (child != null) ...[const SizedBox(height: 16), child!],
             ],
+          ),
+        ),
+      );
+}
+
+/// A game as a card with its art and name, like the tiles on the home page.
+class _GameCard extends StatelessWidget {
+  const _GameCard({super.key, required this.game, required this.onTap});
+  final MiniGame game;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        width: 150,
+        child: Card(
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Semantics(
+              button: true,
+              label: 'Play ${game.title}',
+              excludeSemantics: true,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(height: 96, child: DsGameArt(game.id)),
+                    const SizedBox(height: 8),
+                    Text(game.title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleSmall),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       );
