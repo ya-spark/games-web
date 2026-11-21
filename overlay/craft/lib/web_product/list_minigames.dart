@@ -3,7 +3,6 @@
 // build time; never reached from main_web.dart, so it is not part of the web bundle.
 import 'dart:convert';
 
-import '../engine/engine.dart';
 import '../ui/game_registry.dart';
 
 String minigamesJson() {

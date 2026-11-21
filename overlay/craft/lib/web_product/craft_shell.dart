@@ -6,7 +6,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../core/services.dart';
-import '../engine/engine.dart';
+import 'package:game_core/engine/engine.dart';
 import '../ui/game_registry.dart';
 import '../ui/kit/ds_art.dart';
 import '../ui/quick_quiz_screen.dart';

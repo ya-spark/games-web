@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:APP_PKG/core/services.dart';
-import 'package:APP_PKG/engine/engine.dart';
+import 'package:game_core/engine/engine.dart';
 import 'package:APP_PKG/ui/game_registry.dart';
 import 'package:APP_PKG/ui/quick_quiz_screen.dart';
 import 'package:APP_PKG/web_product/craft_shell.dart';

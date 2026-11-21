@@ -62,7 +62,7 @@ opens with a how-to-play dialog the first time in a browser (`overlay/common`), 
 
 ## How-to-play text
 
-The text of every game's how-to-play dialog is the apps' own: `scripts/sync_rules.py --apps <folder with the app checkouts>` reads each app's catalogue (`lib/core/rules/game_rules.dart` in the Mind hubs, `lib/engine/minigames/how_to_play_catalogue.dart` in the Craft apps) and writes `overlay/common/lib/web_product/web_rules_data.dart`. Run it after an app's text changes and commit the generated file; never edit that file by hand.
+The text of every game's how-to-play dialog is the apps' own: `scripts/sync_rules.py --apps <folder with the app checkouts>` reads each app's catalogue (`lib/core/rules/game_rules.dart` in the Mind hubs, `game_core/lib/engine/minigames/how_to_play_catalogue.dart` in game-factory for the Craft apps, found through `--factory`, default `../game-factory`) and writes `overlay/common/lib/web_product/web_rules_data.dart`. Run it after an app's text changes and commit the generated file; never edit that file by hand.
 
 ## How a commit reaches the site
 
