@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Watch mode for local work: serve dist/, and when files change rebuild what they affect and reload the open page.
-# Usage: scripts/watch.sh [slug ...]      (normally started as WATCH=1 scripts/run.sh [slug ...])
+# Usage: scripts/watch.sh [slug ...]      (started by scripts/run.sh unless WATCH=0 [slug ...])
 # Watches: site/ (landing page only, seconds), overlay/ (the games of that family), the app checkouts (that game).
 # This is rebuild-and-reload, not Flutter hot reload: a game rebuild is a full release build (a few minutes).
 # For instant hot reload of a game on its own, run `flutter run -d chrome` inside its app folder.
-# Env: NO_BUILD=1 (skip the first build), POLL=2 (seconds between checks), plus PORT HOST NO_OPEN APPS_DIR as for run.sh.
+# Env: NO_BUILD=1 (skip the first build), FULL=1 (first build rebuilds every game, not just the missing ones), POLL=2 (seconds between checks), plus PORT HOST NO_OPEN APPS_DIR as for run.sh.
 set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
 
@@ -35,7 +35,14 @@ rebuild() {  # rebuild <build.sh args...>
 }
 
 touch "$STAMP"
-if [ -n "${NO_BUILD:-}" ]; then inject; else rebuild "${slugs[@]}"; fi   # NO_BUILD=1: serve dist/ as is, only watch
+# First build: only games with no output in dist/ yet (plus the landing page, always). FULL=1 rebuilds every game.
+if [ -n "${NO_BUILD:-}" ]; then inject   # NO_BUILD=1: serve dist/ as is, only watch
+else
+  first=()
+  for s in "${slugs[@]}"; do { [ -n "${FULL:-}" ] || [ ! -f "$DIST_DIR/$s/index.html" ]; } && first+=("$s"); done
+  if [ "${#first[@]}" -gt 0 ]; then echo "==> First build: ${first[*]}"; rebuild "${first[@]}"
+  else echo "==> All games already in dist/ (FULL=1 to rebuild them); landing page only"; rebuild --site; fi
+fi
 NO_OPEN_SET="${NO_OPEN:-}"
 NO_OPEN="$NO_OPEN_SET" bash "$ROOT_DIR/scripts/serve.sh" &
 SERVER=$!

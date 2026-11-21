@@ -26,10 +26,10 @@ Needs Flutter (the version in game-factory's `.flutter-version`), Python 3, and 
 | `scripts/serve.sh` | Serve what is in `dist/` (`PORT`, `HOST`, `NO_OPEN=1`). |
 | `scripts/stop.sh`, `scripts/restart.sh` | Stop the server; stop and run again. |
 
-A web release build takes a few minutes per game and there is no Flutter hot reload. `WATCH=1 scripts/run.sh [slug ...]`
-(`scripts/watch.sh`) is the next best thing: it serves, rebuilds what changed (`site/` alone takes seconds; `overlay/` or an app
-checkout rebuilds those games) and reloads the open page when the build is ready. Without it, run again after a change
-(`SITE_ONLY=1 scripts/run.sh` for edits under `site/`, `NO_BUILD=1 scripts/run.sh` to just serve). Locally the games are served from `/<slug>/`, not
+A web release build takes a few minutes per game and there is no Flutter hot reload. `scripts/run.sh [slug ...]` therefore
+runs in watch mode by default (`scripts/watch.sh`): it serves, rebuilds what changed (`site/` alone takes seconds; `overlay/` or an app
+checkout rebuilds those games) and reloads the open page when the build is ready. Use `WATCH=0 scripts/run.sh` for a plain build and
+serve, `SITE_ONLY=1` or `NO_BUILD=1` to skip the watcher. On start it builds only games missing from `dist/` (plus the landing page); `FULL=1` rebuilds them all. Locally the games are served from `/<slug>/`, not
 `/games/<slug>/`; the deploy builds with the real path.
 
 ## The landing page (`site/`)
