@@ -4,6 +4,7 @@
 // game in the browser (no progress, no account). The text is the apps' own (web_rules_data.dart, generated).
 import 'package:flutter/material.dart';
 
+import 'web_bar.dart';
 import 'web_platform.dart';
 import 'web_rules_data.dart';
 import 'web_rules_model.dart';
@@ -101,11 +102,12 @@ class _RulesGateState extends State<RulesGate> {
               height: 44,
               child: Row(
                 children: [
-                  TextButton.icon(
+                  BarButton(
                     key: const Key('web.allGames'),
+                    color: BarColors.allGames,
                     onPressed: () => navigateTo('../'),
-                    icon: const Icon(Icons.apps, size: 18),
-                    label: const Text('All games'),
+                    icon: Icons.apps,
+                    label: 'All games',
                   ),
                   Expanded(
                     child: SingleChildScrollView(
@@ -115,11 +117,12 @@ class _RulesGateState extends State<RulesGate> {
                     ),
                   ),
                   if (has)
-                    TextButton.icon(
+                    BarButton(
                       key: const Key('web.rules.button'),
+                      color: BarColors.rules,
                       onPressed: () => showWebRules(context, widget.gameId),
-                      icon: const Icon(Icons.help_outline, size: 18),
-                      label: const Text('Rules'),
+                      icon: Icons.help_outline,
+                      label: 'Rules',
                     ),
                 ],
               ),

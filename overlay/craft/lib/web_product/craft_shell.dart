@@ -393,17 +393,19 @@ class _CraftShellState extends State<CraftShell> {
         onToggleKnown: _toggleKnown,
       ),
       if (cur != null)
-        TextButton.icon(
+        BarButton(
           key: const Key('web.bar.known'),
+          color: BarColors.known,
           onPressed: () => _toggleKnown(cur),
-          icon: Icon(known ? Icons.check_circle : Icons.check_circle_outline, size: 18),
-          label: Text(known ? 'Known (undo)' : 'I know this'),
+          icon: known ? Icons.check_circle : Icons.check_circle_outline,
+          label: known ? 'Known (undo)' : 'I know this',
         ),
-      TextButton.icon(
+      BarButton(
         key: const Key('web.bar.learn'),
+        color: BarColors.learn,
         onPressed: () => _begin(_quiz, topic: cur, mixed: _round?.mixed),
-        icon: const Icon(Icons.menu_book_outlined, size: 18),
-        label: const Text('Learn'),
+        icon: Icons.menu_book_outlined,
+        label: 'Learn',
       ),
     ];
   }

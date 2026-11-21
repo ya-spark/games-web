@@ -7,6 +7,52 @@ import 'web_catalog.dart';
 import 'web_platform.dart';
 import 'web_state_model.dart';
 
+/// One colour per bar button, so each is easy to tell apart.
+class BarColors {
+  static const allGames = Color(0xFF455A64);
+  static const game = Color(0xFF7B1FA2);
+  static const year = Color(0xFF1565C0);
+  static const topic = Color(0xFF00897B);
+  static const known = Color(0xFF2E7D32);
+  static const learn = Color(0xFFEF6C00);
+  static const rules = Color(0xFFC2185B);
+}
+
+const TextStyle _barText = TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white);
+
+/// The same filled, rounded look for every bar button (one font, one size, white on its own colour).
+ButtonStyle barButtonStyle(Color color) => FilledButton.styleFrom(
+      backgroundColor: color,
+      foregroundColor: Colors.white,
+      disabledBackgroundColor: color.withValues(alpha: 0.4),
+      disabledForegroundColor: Colors.white70,
+      textStyle: _barText,
+      minimumSize: const Size(0, 34),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      shape: const StadiumBorder(),
+    );
+
+/// A bar button: icon, label, own colour.
+class BarButton extends StatelessWidget {
+  const BarButton({super.key, required this.color, required this.icon, required this.label, required this.onPressed});
+  final Color color;
+  final IconData icon;
+  final String label;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 3),
+        child: FilledButton.icon(
+          onPressed: onPressed,
+          style: barButtonStyle(color),
+          icon: Icon(icon, size: 18),
+          label: Text(label, overflow: TextOverflow.ellipsis),
+        ),
+      );
+}
+
 String yearLabel(int y) => y == 0 ? 'Foundation' : 'Year $y';
 
 /// Year chip: shows the active year, opens a picker with every year that has content.
@@ -17,14 +63,15 @@ class YearButton extends StatelessWidget {
   final ValueChanged<int> onPick;
 
   @override
-  Widget build(BuildContext context) => TextButton.icon(
+  Widget build(BuildContext context) => BarButton(
         key: const Key('web.bar.year'),
+        color: BarColors.year,
         onPressed: () async {
           final y = await showYearDialog(context, years, year);
           if (y != null) onPick(y);
         },
-        icon: const Icon(Icons.school_outlined, size: 18),
-        label: Text(year == null ? 'Choose year' : yearLabel(year!)),
+        icon: Icons.school_outlined,
+        label: year == null ? 'Choose year' : yearLabel(year!),
       );
 }
 
@@ -105,18 +152,29 @@ class GameMenuButton extends StatelessWidget {
         ],
       ],
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.sports_esports_outlined, size: 18),
-          const SizedBox(width: 6),
-          const Text('Game', key: Key('web.bar.gameLabel')),
-          if (currentTitle != null)
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 180),
-              child: Text(': $currentTitle', key: const Key('web.bar.gameName'), overflow: TextOverflow.ellipsis),
+        padding: const EdgeInsets.symmetric(horizontal: 3),
+        child: Container(
+          height: 34,
+          padding: const EdgeInsets.only(left: 12, right: 6),
+          decoration: const ShapeDecoration(color: BarColors.game, shape: StadiumBorder()),
+          child: DefaultTextStyle(
+            style: _barText,
+            child: IconTheme(
+              data: const IconThemeData(color: Colors.white, size: 18),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                const Icon(Icons.sports_esports_outlined),
+                const SizedBox(width: 6),
+                const Text('Game', key: Key('web.bar.gameLabel')),
+                if (currentTitle != null)
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 180),
+                    child: Text(': $currentTitle', key: const Key('web.bar.gameName'), overflow: TextOverflow.ellipsis),
+                  ),
+                const Icon(Icons.arrow_drop_down),
+              ]),
             ),
-          const Icon(Icons.arrow_drop_down, size: 18),
-        ]),
+          ),
+        ),
       ),
     );
   }
@@ -142,8 +200,9 @@ class TopicButton extends StatelessWidget {
   final String? label;
 
   @override
-  Widget build(BuildContext context) => TextButton.icon(
+  Widget build(BuildContext context) => BarButton(
         key: const Key('web.bar.topic'),
+        color: BarColors.topic,
         onPressed: topics.isEmpty
             ? null
             : () => showModalBottomSheet<void>(
@@ -163,8 +222,8 @@ class TopicButton extends StatelessWidget {
                     },
                   ),
                 ),
-        icon: const Icon(Icons.list_alt, size: 18),
-        label: Text(label ?? current?.title ?? 'Topic'),
+        icon: Icons.list_alt,
+        label: label ?? current?.title ?? 'Topic',
       );
 }
 
