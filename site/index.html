@@ -532,7 +532,7 @@ try { var t = localStorage.getItem('amc.theme'); if (t === 'light' || t === 'dar
       l.forEach(function (b) {
         if (!b || !b.appCommit) return;
         if (!web && b.gamesWebCommit) web = String(b.gamesWebCommit).slice(0, 7);
-        parts.push(b.slug + ' ' + String(b.appCommit).slice(0, 7));
+        parts.push(b.slug + ' ' + String(b.appCommit).slice(0, 7) + (b.gamesCommit && b.gamesCommit !== 'unknown' ? ' (games ' + String(b.gamesCommit).slice(0, 7) + ')' : ''));
       });
       if (parts.length) $('ver').textContent = 'Version: site ' + web + ' · ' + parts.join(' · ');
     });

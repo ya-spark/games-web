@@ -20,6 +20,9 @@ FAMILY="$(awk -v s="$SLUG" '$1=="-" && $2=="slug:" {cur=($3==s)} cur && $1=="fam
 [ -d "$ROOT/overlay/$FAMILY" ] || { echo "No overlay for family $FAMILY yet"; exit 1; }
 APP_SHA="$(git -C "$APP" rev-parse HEAD 2>/dev/null || echo unknown)"
 WEB_SHA="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
+# The games are packages in game-factory; the app's lock file says which commit of it this build uses.
+FACTORY_SHA="$(awk '/resolved-ref:/ {gsub(/"/,"",$2); r=$2} /url:.*game-factory/ {print r; exit}' "$APP/pubspec.lock" 2>/dev/null)"
+[ -n "$FACTORY_SHA" ] || FACTORY_SHA=unknown
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 mkdir -p "$TMP/app"
 tar -C "$APP" --exclude=.git --exclude=build --exclude=.dart_tool -cf - . | tar -C "$TMP/app" -xf -
@@ -63,16 +66,16 @@ open(p, 'w').write(s.replace('</head>', tag + '</head>', 1))
 PY
 fi
 # build-info.json: which commits this build came from (served at <base>/build-info.json and shown on the /games/ index).
-printf '{"slug":"%s","app":"%s","appCommit":"%s","gamesWebCommit":"%s","builtAt":"%s"}\n' \
-  "$SLUG" "$REPO" "$APP_SHA" "$WEB_SHA" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > build/web/build-info.json
+printf '{"slug":"%s","app":"%s","appCommit":"%s","gamesCommit":"%s","gamesWebCommit":"%s","builtAt":"%s"}\n' \
+  "$SLUG" "$REPO" "$APP_SHA" "$FACTORY_SHA" "$WEB_SHA" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > build/web/build-info.json
 # Version badge: a tiny fixed label on the game page (app commit, site commit) so what is deployed can be checked at a glance.
-python3 - "$TMP/app/build/web/index.html" "${APP_SHA:0:7}" "${WEB_SHA:0:7}" <<'PY'
+python3 - "$TMP/app/build/web/index.html" "${APP_SHA:0:7}" "${FACTORY_SHA:0:7}" "${WEB_SHA:0:7}" <<'PY'
 import sys
-p, a, w = sys.argv[1:4]
+p, a, g, w = sys.argv[1:5]
 s = open(p).read()
 tag = ('<div id="build-version" aria-hidden="true" style="position:fixed;left:6px;bottom:4px;z-index:2147483647;'
        'pointer-events:none;font:10px/1 monospace;color:#fff;background:rgba(0,0,0,.45);padding:2px 5px;border-radius:4px">'
-       'v ' + a + ' / ' + w + '</div>')
+       'app ' + a + ' · games ' + g + ' · site ' + w + '</div>')
 assert '</body>' in s
 open(p, 'w').write(s.replace('</body>', tag + '</body>', 1))
 PY
