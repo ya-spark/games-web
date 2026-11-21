@@ -3,16 +3,17 @@
 
     python3 scripts/make_catalog.py --apps <dir with the app checkouts> --out <catalog.json>
 
-- Only games with `live: true` in games.yaml are listed.
-- Mind games (family mind): one Fun card per game in the app's lib/ui/game_registry.dart.
-  Link: <slug>/#/game/<id>. Each Fun game is listed once (Wingy and the Block games live inside the Mind games).
-- Craft games (family craft): one Learn card per free pack in the app's assets/content/index.json
-  (the built-in starter packs; a pack with a product_id is for sale and is not on the web).
-  Link: <slug>/#/quiz/<subject>/<year>/<topic>. Order inside a year follows assets/content/topics.yaml.
-- Craft minigames: when `--dist <dir>` is given and `<dir>/<slug>/minigames.json` exists (written by build_game.sh from the
-  app's real registry), one extra Learn card per free minigame (not coin-locked, Game mode) and per topic that has
-  enough items of the types the game plays and falls inside the game's years. Link:
-  <slug>/#/play/<gameId>/<subject>/<year>/<topic>. The page shows these only when that game is picked in the Game filter.
+Games-first format (W6):
+- `games`: one entry per playable game. Only games with `live: true` in games.yaml are listed.
+  * Mind games (family mind): one entry per game in the app's lib/ui/game_registry.dart (kind "mind").
+    Link: <slug>/#/game/<id>. Each game is listed once (Wingy and the Block games live inside the Mind games).
+  * Craft games (family craft): one entry per free minigame (not coin-locked, Game mode) in
+    <dist>/<slug>/minigames.json, written by build_game.sh from the app's real registry (kind "craft"). Every Craft game
+    plays every year and topic, so `minYear`/`maxYear` are only the years the app was made for (a sort hint).
+    Link: <slug>/#/play/<gameId> (year and topic come from the saved state).
+- `craft`: the Craft apps with their year band (slug, title, minYear, maxYear); Learn opens in the band of the year.
+- `years`: for every year with free content, the topics in teaching order (Maths, then English), merged over
+  all Craft apps: {"<year>": [{"key": "maths/3/money", "subject", "topic", "title"}]}.
 - Nothing here needs a network; the app checkouts are only read.
 """
 import argparse
@@ -38,8 +39,8 @@ def read_games(path):
     return games
 
 
-def topic_order(topics_yaml):
-    """{(subject, year): [topic ids in teaching order]} from assets/content/topics.yaml (indent based, no yaml lib)."""
+def read_topics(topics_yaml):
+    """{(subject, year): [(topic id, display name)]} from assets/content/topics.yaml (indent based, no yaml lib)."""
     order, subject, year = {}, None, None
     if not topics_yaml.exists():
         return order
@@ -48,80 +49,88 @@ def topic_order(topics_yaml):
         if not line.strip():
             continue
         indent = len(line) - len(line.lstrip())
-        key = line.strip().split(":", 1)[0].strip()
+        key, _, name = line.strip().partition(":")
+        key = key.strip()
         if indent == 0:
             subject, year = key, None
         elif indent == 2 and key.isdigit():
             year = int(key)
             order.setdefault((subject, year), [])
         elif indent == 4 and subject is not None and year is not None:
-            order[(subject, year)].append(key)
+            order[(subject, year)].append((key, name.strip().strip('"\'')))
     return order
 
 
-def mind_cards(game, app_dir):
+def free_packs(app_dir):
+    index = json.loads((app_dir / "assets/content/index.json").read_text())
+    return [p for p in index.get("packs", []) if not p.get("product_id") and p.get("status", "live") == "live"]
+
+
+def year_topics(app_dirs):
+    """{year: [topic entries]} for every (subject, year, topic) with a free pack in any Craft app."""
+    have, names, order = set(), {}, {}
+    for d in app_dirs:
+        for p in free_packs(d):
+            have.add((p["subject"], p["year"], p["topic"]))
+        for (subj, yr), lst in read_topics(d / "assets/content/topics.yaml").items():
+            order.setdefault((subj, yr), [])
+            for tid, name in lst:
+                if tid not in [t for t, _ in order[(subj, yr)]]:
+                    order[(subj, yr)].append((tid, name))
+                names[(subj, yr, tid)] = name
+    out = {}
+    for subj in ("maths", "english"):
+        for (sj, yr), lst in sorted(order.items(), key=lambda kv: kv[0][1]):
+            if sj != subj:
+                continue
+            for tid, name in lst:
+                if (sj, yr, tid) in have:
+                    out.setdefault(yr, []).append({
+                        "key": f"{sj}/{yr}/{tid}", "subject": sj, "topic": tid,
+                        "title": name or tid.replace("_", " ").capitalize(),
+                    })
+    # subjects other than maths and english (none today)
+    for (sj, yr, tid) in sorted(have):
+        if sj in ("maths", "english"):
+            continue
+        out.setdefault(yr, []).append({"key": f"{sj}/{yr}/{tid}", "subject": sj, "topic": tid,
+                                       "title": names.get((sj, yr, tid)) or tid.replace("_", " ").capitalize()})
+    return {str(y): out[y] for y in sorted(out)}
+
+
+def mind_games(game, app_dir):
     text = (app_dir / "lib/ui/game_registry.dart").read_text()
-    cards = []
+    games = []
     for m in re.finditer(r"MiniGame\(\s*id:\s*'([^']+)',\s*title:\s*'([^']+)'", text):
         gid, title = m.group(1), m.group(2)
-        cards.append({
-            "kind": "fun", "id": f"{game['slug']}:{gid}", "gameId": gid, "title": title,
-            "slug": game["slug"], "from": game.get("title", game["slug"]),
-            "art": gid, "link": f"{game['slug']}/#/game/{gid}",
+        games.append({
+            "kind": "mind", "slug": game["slug"], "gameId": gid, "title": title,
+            "from": game.get("title", game["slug"]), "art": gid,
+            "link": f"{game['slug']}/#/game/{gid}",
         })
-    return cards
+    return games
 
 
-def minigame_cards(game, app_dir, packs, mini):
-    cards = []
-    free = [g for g in mini.get("games", [])
-            if g["id"] != "quick_quiz" and g.get("access") != "coins" and "game" in g.get("modes", [])]
-    for p in packs:
-        try:
-            items = json.loads((app_dir / "assets/content" / p["file"]["path"]).read_text())["items"]
-        except (OSError, KeyError, ValueError):
-            continue
-        counts = {}
-        for it in items:
-            counts[it.get("type")] = counts.get(it.get("type"), 0) + 1
-        for g in free:
-            if not g["minYear"] <= p["year"] <= g["maxYear"]:
-                continue
-            if sum(counts.get(t, 0) for t in g["itemTypes"]) < g["minPool"]:
-                continue
-            cards.append({
-                "kind": "learn", "id": f"{game['slug']}:{g['id']}:{p['subject']}:{p['year']}:{p['topic']}",
-                "title": p["title"], "subject": p["subject"], "year": p["year"], "topic": p["topic"],
-                "items": p.get("items", 0), "game": g["title"], "gameId": g["id"],
-                "slug": game["slug"], "from": game.get("title", game["slug"]), "art": g["id"],
-                "link": f"{game['slug']}/#/play/{g['id']}/{p['subject']}/{p['year']}/{p['topic']}",
-            })
-    return cards
+def craft_years(app_dir):
+    ys = [p["year"] for p in free_packs(app_dir)]
+    return (min(ys), max(ys)) if ys else (0, 12)
 
 
-def craft_cards(game, app_dir, dist=None):
-    index = json.loads((app_dir / "assets/content/index.json").read_text())
-    order = topic_order(app_dir / "assets/content/topics.yaml")
-    packs = [p for p in index.get("packs", []) if not p.get("product_id") and p.get("status", "live") == "live"]
-
-    def sort_key(p):
-        ids = order.get((p["subject"], p["year"]), [])
-        pos = ids.index(p["topic"]) if p["topic"] in ids else len(ids)
-        return (p["subject"], p["year"], pos, p["topic"])
-
-    cards = []
-    for p in sorted(packs, key=sort_key):
-        cards.append({
-            "kind": "learn", "id": f"{game['slug']}:{p['subject']}:{p['year']}:{p['topic']}",
-            "title": p["title"], "subject": p["subject"], "year": p["year"], "topic": p["topic"],
-            "items": p.get("items", 0), "game": "Quick quiz", "gameId": "quick_quiz",
-            "slug": game["slug"], "from": game.get("title", game["slug"]), "art": "quick_quiz",
-            "link": f"{game['slug']}/#/quiz/{p['subject']}/{p['year']}/{p['topic']}",
-        })
+def craft_games(game, app_dir, dist=None):
     mini_file = Path(dist) / game["slug"] / "minigames.json" if dist else None
-    if mini_file and mini_file.exists():
-        cards += minigame_cards(game, app_dir, sorted(packs, key=sort_key), json.loads(mini_file.read_text()))
-    return cards
+    if not (mini_file and mini_file.exists()):
+        return []
+    lo, hi = craft_years(app_dir)
+    games = []
+    for g in json.loads(mini_file.read_text()).get("games", []):
+        if g["id"] == "quick_quiz" or g.get("access") == "coins" or "game" not in g.get("modes", []):
+            continue
+        games.append({
+            "kind": "craft", "slug": game["slug"], "gameId": g["id"], "title": g["title"],
+            "from": game.get("title", game["slug"]), "art": g["id"], "minYear": lo, "maxYear": hi,
+            "link": f"{game['slug']}/#/play/{g['id']}",
+        })
+    return games
 
 
 def main():
@@ -131,20 +140,26 @@ def main():
     ap.add_argument("--dist", help="folder with the built games (<slug>/minigames.json), for the Craft minigame cards")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
-    cards = []
+    games, craft, craft_dirs = [], [], []
     for g in read_games(a.games):
         if not g.get("live"):
             continue
         app_dir = Path(a.apps) / g["app"].split("/", 1)[1]
         if not app_dir.is_dir():
             sys.exit(f"no checkout for {g['slug']} at {app_dir}")
-        fam = g.get("family")
-        cards += mind_cards(g, app_dir) if fam == "mind" else craft_cards(g, app_dir, a.dist)
-    out = {"generatedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "cards": cards}
+        if g.get("family") == "mind":
+            games += mind_games(g, app_dir)
+        else:
+            lo, hi = craft_years(app_dir)
+            craft.append({"slug": g["slug"], "title": g.get("title", g["slug"]), "minYear": lo, "maxYear": hi})
+            craft_dirs.append(app_dir)
+            games += craft_games(g, app_dir, a.dist)
+    out = {"format": 2, "generatedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+           "craft": craft, "years": year_topics(craft_dirs), "games": games}
     Path(a.out).parent.mkdir(parents=True, exist_ok=True)
     Path(a.out).write_text(json.dumps(out, indent=1) + "\n")
-    fun = sum(1 for c in cards if c["kind"] == "fun")
-    print(f"catalog: {fun} fun, {len(cards) - fun} learn -> {a.out}")
+    topics = sum(len(v) for v in out["years"].values())
+    print(f"catalog: {len(games)} games, {len(out['years'])} years, {topics} topics -> {a.out}")
 
 
 if __name__ == "__main__":

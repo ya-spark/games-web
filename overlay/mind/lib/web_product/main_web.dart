@@ -1,8 +1,9 @@
 // ignore_for_file: depend_on_referenced_packages
 // Web product entry for the Mind games (Ember, Presto). games-web copies this file into a checkout
 // of the app at a pinned commit and builds it with `-t lib/web_product/main_web.dart`. The app repo
-// is never changed. Nothing is saved: preferences are replaced by an in-memory store, there are no
-// profiles, no coins, no shop and no purchases; each game is opened straight from the game list.
+// is never changed. The app's own preferences are replaced by an in-memory store; there are no profiles, no coins,
+// no shop and no purchases. Each game opens straight from the game list or the address, with the thin bar (Game menu,
+// Rules) on top; the only things remembered are the web state of web_state.dart and the rules-seen flags.
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_platform_interface.dart';
@@ -17,13 +18,17 @@ import '../ui/theme/app_theme.dart';
 import '../ui/theme/design_loader.dart';
 import '../ui/theme/design_scope.dart';
 import '../ui/theme/design_tokens.dart';
+import 'web_bar.dart';
+import 'web_catalog.dart';
 import 'web_link.dart';
+import 'web_platform.dart';
 import 'web_rules.dart';
+import 'web_state.dart';
 
 Future<void> main() async {
   keepAddressAsIs();
   WidgetsFlutterBinding.ensureInitialized();
-  // Progress is not saved on the web: every visit starts empty.
+  // The app's own progress is not kept on the web: every visit starts empty.
   SharedPreferencesStorePlatform.instance = InMemorySharedPreferencesStore.empty();
   final config = AppConfig.fromYamlString(
     await rootBundle.loadString('app.config.yaml'),
@@ -64,12 +69,7 @@ class WebProductApp extends StatelessWidget {
     if (link.kind == 'game') {
       for (final e in games.entries) {
         final g = e.game;
-        if (g.id == link.at(1) && g.buildStandalone != null) {
-          return RulesGate(
-            gameId: g.id,
-            child: g.buildStandalone!((_) async {}) as Widget,
-          );
-        }
+        if (g.id == link.at(1) && g.buildStandalone != null) return MindGameScreen(games: games, gameId: g.id);
       }
     }
     return GameList(title: cfg.displayName, games: games);
@@ -143,12 +143,7 @@ class GameList extends StatelessWidget {
               borderRadius: BorderRadius.circular(24),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
-                  builder: (_) => Scaffold(
-                    body: RulesGate(
-                      gameId: g.id,
-                      child: g.buildStandalone!((_) async {}) as Widget,
-                    ),
-                  ),
+                  builder: (_) => Scaffold(body: MindGameScreen(games: games, gameId: g.id)),
                 ),
               ),
               child: Semantics(
@@ -167,6 +162,57 @@ class GameList extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// One Mind game under the thin bar. The Game menu switches to another game of this build in place (and keeps the
+/// address in step); a game of another build, or Learn, opens that build's page.
+class MindGameScreen extends StatefulWidget {
+  const MindGameScreen({super.key, required this.games, required this.gameId});
+  final MiniGameRegistry games;
+  final String gameId;
+
+  @override
+  State<MindGameScreen> createState() => _MindGameScreenState();
+}
+
+class _MindGameScreenState extends State<MindGameScreen> {
+  late String _id = widget.gameId;
+  final String _slug = currentWebSlug();
+
+  MiniGame? get _game {
+    for (final e in widget.games.entries) {
+      if (e.game.id == _id && e.game.buildStandalone != null) return e.game;
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final g = _game;
+    if (g == null) return const SizedBox.shrink();
+    final from = ServicesScope.of(context).config.displayName;
+    return RulesGate(
+      key: ValueKey('gate.$_id'),
+      gameId: _id,
+      actions: [
+        CatalogGameMenu(
+          currentSlug: _slug,
+          currentGameId: _id,
+          year: loadWebState().year,
+          fallback: [
+            for (final e in widget.games.entries)
+              if (e.game.buildStandalone != null)
+                CatalogGame(slug: _slug, gameId: e.game.id, title: e.game.title, from: from, kind: 'mind'),
+          ],
+          onPickHere: (c) {
+            replaceHash('#/game/${c.gameId}');
+            setState(() => _id = c.gameId);
+          },
+        ),
+      ],
+      child: g.buildStandalone!((_) async {}) as Widget,
     );
   }
 }

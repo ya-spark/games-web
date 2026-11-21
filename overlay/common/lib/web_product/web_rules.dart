@@ -1,32 +1,20 @@
-// ignore_for_file: depend_on_referenced_packages
 // Rules and tips for the web product (R1, web side). Shared by the Mind and Craft overlays: build_game.sh copies
 // overlay/common on top of the app, then the family overlay. The first time a game is played in this browser the
 // rules dialog opens by itself; afterwards a Rules button reopens it. The only thing remembered is one small flag per
 // game in the browser (no progress, no account). The text is the apps' own (web_rules_data.dart, generated).
 import 'package:flutter/material.dart';
-import 'package:web/web.dart' as web;
 
+import 'web_platform.dart';
 import 'web_rules_data.dart';
 import 'web_rules_model.dart';
 
 /// The text for every game, by game id (generated: see web_rules_data.dart).
 const Map<String, GameRules> webRules = webRulesData;
 
-bool _seen(String id) {
-  try {
-    return web.window.localStorage.getItem('rules-seen:$id') != null;
-  } on Object {
-    return false;
-  }
-}
+bool _seen(String id) => storageGet('rules-seen:$id') != null;
 
-void _markSeen(String id) {
-  try {
-    web.window.localStorage.setItem('rules-seen:$id', '1');
-  } on Object {
-    // A browser that blocks storage simply shows the rules every time.
-  }
-}
+// A browser that blocks storage simply shows the rules every time.
+void _markSeen(String id) => storageSet('rules-seen:$id', '1');
 
 /// Opens the rules dialog for [gameId]. Does nothing for an id without rules text.
 Future<void> showWebRules(BuildContext context, String gameId) {
@@ -71,12 +59,17 @@ Future<void> showWebRules(BuildContext context, String gameId) {
   );
 }
 
-/// Wraps a game screen with a thin top bar: "All games" (back to the catalog) and "Rules". The first time this
-/// game is opened in this browser the rules dialog opens by itself.
+/// Wraps a game screen with a thin top bar: "All games" (back to the catalog), the [actions] of the build (game and
+/// topic switching, Learn: see web_bar.dart) and "Rules". The first time this game is opened in this browser the
+/// rules dialog opens by itself.
 class RulesGate extends StatefulWidget {
-  const RulesGate({super.key, required this.gameId, required this.child});
+  const RulesGate({super.key, required this.gameId, required this.child, this.actions = const [], this.autoOpen = true});
   final String gameId;
+
+  /// Open the rules by themselves the first time (off while a screen other than the game is showing).
+  final bool autoOpen;
   final Widget child;
+  final List<Widget> actions;
 
   @override
   State<RulesGate> createState() => _RulesGateState();
@@ -86,7 +79,7 @@ class _RulesGateState extends State<RulesGate> {
   @override
   void initState() {
     super.initState();
-    if (webRules.containsKey(widget.gameId) && !_seen(widget.gameId)) {
+    if (widget.autoOpen && webRules.containsKey(widget.gameId) && !_seen(widget.gameId)) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!mounted) return;
         _markSeen(widget.gameId);
@@ -105,16 +98,22 @@ class _RulesGateState extends State<RulesGate> {
           child: SafeArea(
             bottom: false,
             child: SizedBox(
-              height: 40,
+              height: 44,
               child: Row(
                 children: [
                   TextButton.icon(
                     key: const Key('web.allGames'),
-                    onPressed: () => web.window.location.href = '../',
+                    onPressed: () => navigateTo('../'),
                     icon: const Icon(Icons.apps, size: 18),
                     label: const Text('All games'),
                   ),
-                  const Spacer(),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      key: const Key('web.bar.actions'),
+                      scrollDirection: Axis.horizontal,
+                      child: Row(children: widget.actions),
+                    ),
+                  ),
                   if (has)
                     TextButton.icon(
                       key: const Key('web.rules.button'),

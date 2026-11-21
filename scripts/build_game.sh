@@ -26,6 +26,20 @@ tar -C "$APP" --exclude=.git --exclude=build --exclude=.dart_tool -cf - . | tar 
 [ -d "$ROOT/overlay/common/lib" ] && cp -R "$ROOT/overlay/common/lib/." "$TMP/app/lib/"
 cp -R "$ROOT/overlay/$FAMILY/lib/." "$TMP/app/lib/"
 [ -d "$ROOT/overlay/$FAMILY/test" ] && mkdir -p "$TMP/app/test" && cp -R "$ROOT/overlay/$FAMILY/test/." "$TMP/app/test/"
+# Overlay tests import the app by package name; the apps differ, so the files carry APP_PKG until here.
+PKG_NAME="$(awk '/^name:/ {print $2; exit}' "$TMP/app/pubspec.yaml")"
+[ -d "$ROOT/overlay/$FAMILY/test" ] && grep -rl APP_PKG "$TMP/app/test" 2>/dev/null | xargs -r sed -i "s/APP_PKG/$PKG_NAME/g"
+# Craft: every Craft game plays every year and topic (W6), so merge the free packs and topics of the other Craft apps
+# into this temporary copy (the checkouts and this public repo are not changed).
+if [ "$FAMILY" = craft ]; then
+  OTHERS=()
+  while read -r other_slug other_repo; do
+    [ "$other_slug" = "$SLUG" ] && continue
+    d="${APPS_DIR:-$ROOT/../apps}/${other_repo#*/}"
+    if [ -d "$d/assets/content" ]; then OTHERS+=("$d"); else echo "WARNING: no checkout of $other_slug at $d; its years are missing from $SLUG"; fi
+  done < <(awk '$1=="-" && $2=="slug:" {s=$3} $1=="app:" {a=$2} $1=="family:" {if ($2=="craft") print s, a}' "$ROOT/games.yaml")
+  [ "${#OTHERS[@]}" -gt 0 ] && python3 "$ROOT/scripts/merge_craft_content.py" "$TMP/app" "${OTHERS[@]}"
+fi
 cd "$TMP/app"
 flutter pub get >/dev/null
 flutter build web --release --no-web-resources-cdn --base-href "$BASE_HREF" -t lib/web_product/main_web.dart

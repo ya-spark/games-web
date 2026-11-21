@@ -3,8 +3,9 @@
 The public web versions of the games, served at `https://activemindcraft.com/games/<slug>/`
 (the `/appgames/<name>/` pages are only test copies of the store apps and are built elsewhere).
 
-Rules of the web product (owner, 2026-11-15): no coins, no shop, no purchases, no profiles, and
-**nothing is saved** (every visit starts fresh). The app repos are never changed for it.
+Rules of the web product: no coins, no shop, no purchases, no profiles, no backend. The app repos are never changed for it.
+What the browser remembers (owner, 2026-11-21): one small JSON blob on this device only (`amc.state`: year, which topics are
+known or being practised, last game), plus the theme and one rules-seen flag per game. Nothing is sent anywhere.
 
 ## How it works
 - `games.yaml` lists the games: slug, the app repo the code comes from, and the overlay family.
@@ -32,15 +33,32 @@ checkout rebuilds those games) and reloads the open page when the build is ready
 serve, `SITE_ONLY=1` or `NO_BUILD=1` to skip the watcher. On start it builds only games missing from `dist/` (plus the landing page); `FULL=1` rebuilds them all. Locally the games are served from `/<slug>/`, not
 `/games/<slug>/`; the deploy builds with the real path.
 
-## The landing page (`site/`)
+## The landing page (`site/`) and the games-first flow (W6)
 
-`site/index.html` is plain HTML and JavaScript (no Flutter): filters Learn / Fun, Year, Topic and Game over `catalog.json`.
-`scripts/make_catalog.py` writes `catalog.json` at deploy time from the app checkouts: one Fun card per game in a Mind
-app's `lib/ui/game_registry.dart` and one Learn card per free pack in a Craft app's `assets/content/index.json`, only for
-games with `live: true` in `games.yaml`. A card links into the game's own build: `<slug>/#/game/<id>` or
-`<slug>/#/quiz/<subject>/<year>/<topic>`. The card art in `site/art/` is the studio's own icon set (from game-factory
-`design/game_art`, original work, see its README). Every game opens with a how-to-play dialog the first time in a browser
-(`overlay/common`), and a Rules button brings it back; the only thing stored is one flag per game in the browser.
+`site/index.html` is plain HTML and JavaScript (no Flutter) and shows the games only: Craft games sorted by the saved
+year (Scout for Years 0 to 6 first, then Ranger 7 to 10, Champion 11 to 12; nothing hidden), then a "Puzzles" section with
+the Mind games. A Year chip in the header sets the active year (asked once, on the first game opened, then saved).
+`site/progress.js` reads and writes the saved state (`amc.state`); the Flutter builds read the same key, so keep
+`overlay/common/lib/web_product/web_state_model.dart` and `progress.js` in step. Tests: `node site/progress.test.js`
+and, in a Craft build, `overlay/craft/test/web_state_test.dart` and `web_shell_test.dart` (copied in by `build_game.sh`).
+
+`scripts/make_catalog.py` writes `catalog.json` (format 2) at deploy time from the app checkouts: `games` (one entry per
+Mind game in a Mind app's `lib/ui/game_registry.dart`, one per free minigame in a Craft app's `minigames.json`),
+`craft` (the Craft apps with their year band) and `years` (the topics of each year in teaching order, Maths then
+English, merged over all Craft apps). Links: `<slug>/#/play/<gameId>[/<subject>/<year>/<topic>]` (Craft game),
+`<slug>/#/learn[/<subject>/<year>/<topic>]` (Learn, the Quick quiz for now; `#/quiz/...` still works as the old name),
+`<slug>/#/game/<id>` (Mind game). `topic` may be `all` for a mixed round; a link without a year or topic uses the saved
+year and the first topic not marked known.
+
+Every Craft game plays every year and topic: `build_game.sh` runs `scripts/merge_craft_content.py`, which copies the free
+packs and topics of the other Craft apps into the temporary copy of the app (nothing is committed here; the checkouts are
+never changed). A game with too few questions for a topic falls back to that topic's Quick quiz with a short note.
+
+Inside a game the thin bar (`overlay/common/.../web_rules.dart`, `web_bar.dart`) has Year, Game, Topic, "I know this", Learn
+and Rules. A topic is new, practising or known; known applies in every game, is reached by a 5-question check (4 right to
+pass) and can be undone. When every topic of the year is known the game offers the next year. The card art in
+`site/art/` is the studio's own icon set (from game-factory `design/game_art`, original work, see its README). Every game
+opens with a how-to-play dialog the first time in a browser (`overlay/common`), and a Rules button brings it back.
 
 ## How-to-play text
 
@@ -57,6 +75,6 @@ game that is behind (it compares each game's `build-info.json` on the site with 
 - `ember` (Mind family): builds; the game list shows the new icons; Sudoku plays.
 - `scout` (Craft family): builds; year, subject and topic pickers in the teaching order of `topics.yaml`; a topic or a mixed
   round runs the Quick quiz on an empty anonymous progress with all built-in starter packs open.
-- For both, browser `localStorage` stays empty (nothing is saved) and the console shows no errors (Chromium, 2026-11-15).
+- Superseded by W6 (2026-11-21): the browser now keeps the small state described above.
 - Not done yet: `presto`, `ranger`, `champion` (same overlays, not built or looked at yet), the minigames of the Craft apps beyond
   the Quick quiz, the public landing page, the ad slot, the build-and-publish workflow and the hosting container.
