@@ -142,6 +142,7 @@ try { var t = localStorage.getItem('amc.theme'); if (t === 'light' || t === 'dar
 
   footer { padding-top: 48px; padding-bottom: 40px; color: var(--muted); font-size: .9rem; text-align: center; }
   footer p { margin: 0 auto; max-width: 60ch; }
+  footer .ver { margin-top: 12px; font-size: .75rem; opacity: .8; font-variant-numeric: tabular-nums; }
   .foot-logo { margin: 0 auto 20px; text-align: center; }
   .foot-logo img { width: 150px; height: auto; }
   .foot-logo .lg-dark { display: none; }
@@ -237,6 +238,7 @@ try { var t = localStorage.getItem('amc.theme'); if (t === 'light' || t === 'dar
 <footer class="wrap">
   <div class="foot-logo"><img class="lg-light" src="_site/art/brand/logo-mark-light.svg" width="150" height="143" alt="Active Mind Craft" loading="lazy"><img class="lg-dark" src="_site/art/brand/logo-mark-dark.svg" width="150" height="143" alt="" aria-hidden="true" loading="lazy"></div>
   <p>Your progress is saved on this device only. Nothing is sent anywhere, and there is no account.</p>
+  <p id="ver" class="ver" aria-label="Build version"></p>
 </footer>
 
 <script src="_site/progress.js"></script>
@@ -513,10 +515,26 @@ try { var t = localStorage.getItem('amc.theme'); if (t === 'light' || t === 'dar
       /* a saved year that has no content is kept but not offered; the chip still shows it */
       loadedOk = true; $('main').setAttribute('aria-busy', 'false');
       $('yearbtn').disabled = !yearList.length; $('learnbtn').disabled = !bandCraft();
-      render();
+      render(); showVersion();
     }).catch(function () {
       loadedOk = false; $('main').setAttribute('aria-busy', 'false');
       $('games').hidden = true; $('empty').hidden = true; $('err').hidden = false; say('The game list could not be loaded.');
+    });
+  }
+  /* Build version: the commits each app on this site was built from (build-info.json next to each app). */
+  function showVersion() {
+    var slugs = [], web = '';
+    (cat && cat.games || []).forEach(function (g) { var s = String(g.link || '').split('/')[0]; if (/^[a-z0-9_-]+$/.test(s) && slugs.indexOf(s) < 0) slugs.push(s); });
+    Promise.all(slugs.map(function (s) {
+      return fetch(s + '/build-info.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    })).then(function (l) {
+      var parts = [];
+      l.forEach(function (b) {
+        if (!b || !b.appCommit) return;
+        if (!web && b.gamesWebCommit) web = String(b.gamesWebCommit).slice(0, 7);
+        parts.push(b.slug + ' ' + String(b.appCommit).slice(0, 7));
+      });
+      if (parts.length) $('ver').textContent = 'Version: site ' + web + ' · ' + parts.join(' · ');
     });
   }
   $('retry').addEventListener('click', load);
