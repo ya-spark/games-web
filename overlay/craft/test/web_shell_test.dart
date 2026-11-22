@@ -233,6 +233,30 @@ void main() {
     expect(state.byGame[blocked.game.id], isNotNull);
   });
 
+  testWidgets('B-13: a game lists and starts on only the topics it can play; the catalog knows its years', (tester) async {
+    final blocked = appGames.entries.firstWhere((e) =>
+        e.game.access != GameAccess.coins &&
+        e.game.id != quickQuizGame.id &&
+        !e.game.itemTypes.contains(ItemType.mcq));
+    final type = blocked.game.itemTypes.first.name;
+    final extra = [
+      for (var i = 0; i < 40; i++) _item('d$i', 'maths', 3, 'delta', type),
+      for (var i = 0; i < 40; i++) _item('z$i', 'english', 3, 'zeta', type),
+    ];
+    final state = WebState();
+    // No topic in the address: the game starts on the first topic it can play, not on alpha (which it cannot).
+    await _pump(tester, state, year: 3, launch: WebLinkLaunch(gameId: blocked.game.id), extra: extra);
+    tester.takeException();
+    expect(state.statusOf('maths/3/alpha'), TopicStatus.fresh);
+    expect(state.statusOf('maths/3/delta'), TopicStatus.practising);
+    await tester.tap(find.byKey(const Key('web.bar.topic')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('web.topic.delta')), findsOneWidget);
+    expect(find.byKey(const Key('web.topic.zeta')), findsOneWidget);
+    expect(find.byKey(const Key('web.topic.alpha')), findsNothing);
+    expect(find.byKey(const Key('web.topic.beta')), findsNothing);
+  });
+
   testWidgets('the Game button shows "Game: <name>" for the game on screen', (tester) async {
     final state = WebState();
     await _pump(tester, state, year: 3);

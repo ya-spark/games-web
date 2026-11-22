@@ -11,6 +11,8 @@ Games-first format (W6):
     <dist>/<slug>/minigames.json, written by build_game.sh from the app's real registry (kind "craft"). Every Craft game
     plays every year and topic, so `minYear`/`maxYear` are only the years the app was made for (a sort hint).
     Link: <slug>/#/play/<gameId> (year and topic come from the saved state).
+    `playable` (B-13): the topic keys the game has enough questions for, by year (from minigames.json, written by the
+    same minPool rule the game uses); the landing page and the in-game menu hide the card for a year with none.
 - `craft`: the Craft apps with their year band (slug, title, minYear, maxYear); Learn opens in the band of the year.
 - `years`: for every year with free content, the topics in teaching order (Maths, then English), merged over
   all Craft apps: {"<year>": [{"key": "maths/3/money", "subject", "topic", "title"}]}.
@@ -78,6 +80,12 @@ def year_topics(app_dirs):
                 if tid not in [t for t, _ in order[(subj, yr)]]:
                     order[(subj, yr)].append((tid, name))
                 names[(subj, yr, tid)] = name
+    # B-13: a pack topic that topics.yaml does not name is still played (the game lists it after the named ones, by id,
+    # like the web shell does); list it here too so "Topic N of M" and the topic list agree with the game.
+    for (sj, yr, tid) in sorted(have):
+        order.setdefault((sj, yr), [])
+        if tid not in [t for t, _ in order[(sj, yr)]]:
+            order[(sj, yr)].append((tid, ""))
     out = {}
     for subj in ("maths", "english"):
         for (sj, yr), lst in sorted(order.items(), key=lambda kv: kv[0][1]):
@@ -125,11 +133,16 @@ def craft_games(game, app_dir, dist=None):
     for g in json.loads(mini_file.read_text()).get("games", []):
         if g["id"] == "quick_quiz" or g.get("access") == "coins" or "game" not in g.get("modes", []):
             continue
-        games.append({
+        entry = {
             "kind": "craft", "slug": game["slug"], "gameId": g["id"], "title": g["title"],
             "from": game.get("title", game["slug"]), "art": g["id"], "minYear": lo, "maxYear": hi,
             "link": f"{game['slug']}/#/play/{g['id']}",
-        })
+        }
+        # B-13: {"<year>": ["maths/3/money", ...]} = the topics this game has enough questions for. The page shows the
+        # game on a card only when the chosen year has at least one; a direct link still opens it (no-questions screen).
+        if isinstance(g.get("playable"), dict):
+            entry["playable"] = {y: t for y, t in g["playable"].items() if t}
+        games.append(entry)
     return games
 
 

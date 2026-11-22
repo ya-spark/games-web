@@ -125,7 +125,7 @@ class GameMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final games = catalog.sorted(year);
+    final games = catalog.sorted(year, keepSlug: currentSlug, keepGameId: currentGameId);
     final firstMind = games.indexWhere((g) => !g.isCraft);
     return PopupMenuButton<Object>(
       key: const Key('web.bar.game'),

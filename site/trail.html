@@ -12,7 +12,9 @@ try { var t = localStorage.getItem('amc.theme'); if (t === 'light' || t === 'dar
   :root { --bg:#0B1020; --sky:#0F1733; --ink:#EEF2FF; --muted:#A9B4D0; --line:#35416A; --dim:#4A5788; --glow:#FFD86B; --half:#7AB2FF; --focus:#FFC24D; --surface:#151C33; }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  html, body { height: 100%; }
+  /* B-14: the page fills the window and never scrolls on a laptop (the sky takes the room that is left). */
+  body { display: flex; flex-direction: column; overflow-x: hidden; margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
   a { color: inherit; }
   :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -20,14 +22,14 @@ try { var t = localStorage.getItem('amc.theme'); if (t === 'light' || t === 'dar
   header a.back { color: #fff; text-decoration: none; font-weight: 600; padding: 8px 12px; border-radius: 10px; border: 1px solid #7C8FD6; }
   header h1 { font-size: 1.15rem; margin: 0; flex: 1; }
   header select { background: #1E2745; color: #fff; border: 1px solid #7C8FD6; border-radius: 10px; padding: 8px 10px; }
-  main { max-width: 1000px; margin: 0 auto; padding: 16px; }
-  .sum { color: var(--muted); margin: 0 0 12px; }
-  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin: 0 0 12px; padding: 0; list-style: none; color: var(--muted); font-size: .9rem; }
+  main { max-width: 1000px; width: 100%; margin: 0 auto; padding: 10px 16px; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .sum { color: var(--muted); margin: 0 0 6px; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin: 0 0 8px; padding: 0; list-style: none; color: var(--muted); font-size: .9rem; }
   .legend span { display: inline-block; width: 14px; height: 14px; border-radius: 50%; margin-right: 6px; vertical-align: -2px; border: 2px solid var(--dim); }
   .legend .k { background: var(--glow); border-color: var(--glow); box-shadow: 0 0 8px var(--glow); }
   .legend .p { background: linear-gradient(90deg, var(--half) 50%, transparent 50%); border-color: var(--half); }
-  .sky { background: radial-gradient(900px 500px at 30% 0, #1B2A5E 0, var(--sky) 70%); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
-  svg { display: block; width: 100%; height: auto; }
+  .sky { background: radial-gradient(900px 500px at 30% 0, #1B2A5E 0, var(--sky) 70%); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; flex: 1 1 auto; min-height: 220px; display: flex; }
+  svg { display: block; width: 100%; height: 100%; }
   .edge { stroke: var(--dim); stroke-width: 1.5; opacity: .7; }
   .edge.lit { stroke: var(--glow); opacity: .9; }
   .star a { cursor: pointer; }
@@ -38,7 +40,7 @@ try { var t = localStorage.getItem('amc.theme'); if (t === 'light' || t === 'dar
   .star text { fill: var(--ink); font-size: 13px; text-anchor: middle; pointer-events: none; }
   .star:hover circle.core, .star a:focus-visible circle.core { stroke: #fff; }
   .row { font-size: .95rem; color: var(--muted); margin: 12px 0 0; }
-  .note { margin: 16px 0 0; color: var(--muted); font-size: .9rem; }
+  .note { margin: 8px 0 0; color: var(--muted); font-size: .9rem; }
   @media (prefers-reduced-motion: no-preference) { .star.known circle.halo { animation: tw 3s ease-in-out infinite; } @keyframes tw { 50% { opacity: .4; } } }
 </style>
 </head>
@@ -116,7 +118,7 @@ try { var t = localStorage.getItem('amc.theme'); if (t === 'light' || t === 'dar
     list.forEach(function (t) {
       var s = P.statusOf(st, t.key), p = L.pos[t.key];
       if (s === 'known') known++; else if (s === 'practising') prac++;
-      var name = t.name || t.topic, label = name + ', ' + yearName(y) + ', ' + (s === 'fresh' ? 'new' : s);
+      var name = t.title || t.name || t.topic, label = name + ', ' + yearName(y) + ', ' + (s === 'fresh' ? 'new' : s);
       var g = svgEl('g', { class: 'star ' + s });
       var a = svgEl('a', { href: slug ? slug + '/#/learn/' + t.subject + '/' + y + '/' + t.topic : './', 'aria-label': label });
       a.appendChild(svgEl('circle', { class: 'halo', cx: p.x, cy: p.y, r: 22, fill: 'none' }));

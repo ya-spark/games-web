@@ -178,6 +178,27 @@ class _CraftShellState extends State<CraftShell> {
     return out;
   }
 
+  final Map<String, List<TopicRef>> _gameTopicsCache = {};
+
+  /// The topics of [year] that [gameId] can play (enough questions of its kinds: the same `minPool` rule a round
+  /// uses), in teaching order. Learn (the Quick quiz) plays every topic. B-13: lists and "next topic" use this, so
+  /// no topic is offered that would open an empty game.
+  List<TopicRef> _gameTopics(String gameId, int year) {
+    final all = _topicsOf(year);
+    final game = _gameFor(gameId);
+    if (game.id == quickQuizGame.id) return all;
+    return _gameTopicsCache.putIfAbsent('${game.id}/$year', () {
+      final counts = <String, int>{};
+      for (final p in widget.open) {
+        if (p.year == year && game.canPlay(p)) {
+          final k = '${p.subject}/$year/${p.topic}';
+          counts[k] = (counts[k] ?? 0) + 1;
+        }
+      }
+      return [for (final t in all) if ((counts[t.key] ?? 0) >= game.minPool) t];
+    });
+  }
+
   String _subjectLabel(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 
   /// A topic id that topics.yaml does not name, shown as words: comparing_size -> Comparing size.
@@ -206,6 +227,9 @@ class _CraftShellState extends State<CraftShell> {
         today: 0,
         random: Random(),
         types: game.itemTypes,
+        // The game's own limits (size class, value range, letter count): without them a round could start with
+        // items the game then drops, an empty "0 of 0" round (B-13).
+        accepts: game.id == quickQuizGame.id ? null : game.canPlay,
         topic: topic,
         count: count ?? 10,
         minPool: minPool ?? (game.id == quickQuizGame.id ? 1 : game.minPool),
@@ -231,7 +255,9 @@ class _CraftShellState extends State<CraftShell> {
     }
     var t = topic;
     if (t == null && mixed == null) {
-      t = defaultTopic(topics, widget.state, game: gameId);
+      final own = _gameTopics(gameId, year);
+      // A game with no playable topic this year keeps the plain list: the no-questions screen then explains it.
+      t = defaultTopic(own.isEmpty ? topics : own, widget.state, game: gameId);
       if (t == null) {
         setState(() {
           _gameId = gameId;
@@ -394,7 +420,7 @@ class _CraftShellState extends State<CraftShell> {
       setState(() {});
       return;
     }
-    final topics = _topicsOf(t.year);
+    final topics = _gameTopics(_gameId, t.year);
     final next = nextTopic(topics, t.key, s);
     if (_current?.key == t.key || _round == null) {
       next == null ? setState(() => _screen = _Screen.allDone) : _begin(_gameId, topic: next);
@@ -405,7 +431,7 @@ class _CraftShellState extends State<CraftShell> {
 
   List<Widget> _actions() {
     final year = widget.year;
-    final topics = year == null ? const <TopicRef>[] : _topicsOf(year);
+    final topics = year == null ? const <TopicRef>[] : _gameTopics(_gameId, year);
     final cur = _current;
     final known = cur != null && widget.state.statusOf(cur.key) == TopicStatus.known;
     final fallback = [
@@ -425,14 +451,15 @@ class _CraftShellState extends State<CraftShell> {
         onLearnHere: () => _begin(_quiz, topic: cur, mixed: _round?.mixed),
       ),
       YearButton(year: year, years: widget.years, onPick: widget.onYear),
-      TopicButton(
-        topics: topics,
-        state: widget.state,
-        current: cur,
-        label: cur?.title ?? (_round?.mixed != null ? 'All topics' : 'Topic'),
-        onOpen: (t) => _begin(_gameId, topic: t),
-        onToggleKnown: _toggleKnown,
-      ),
+      if (topics.isNotEmpty)
+        TopicButton(
+          topics: topics,
+          state: widget.state,
+          current: cur,
+          label: cur?.title ?? (_round?.mixed != null ? 'All topics' : 'Topic'),
+          onOpen: (t) => _begin(_gameId, topic: t),
+          onToggleKnown: _toggleKnown,
+        ),
       if (cur != null)
         BarButton(
           key: const Key('web.bar.known'),
@@ -491,7 +518,7 @@ class _CraftShellState extends State<CraftShell> {
               OutlinedButton(
                 key: const Key('web.revisit'),
                 onPressed: () {
-                  final topics = year == null ? const <TopicRef>[] : _topicsOf(year);
+                  final topics = year == null ? const <TopicRef>[] : _gameTopics(_gameId, year);
                   if (topics.isNotEmpty) _begin(_gameId, topic: topics.first);
                 },
                 child: const Text('Start the year again'),
@@ -505,7 +532,7 @@ class _CraftShellState extends State<CraftShell> {
         return _Centered(title: 'Nothing to play here yet', text: _message);
       case _Screen.ended:
         final cur = _current;
-        final topics = year == null ? const <TopicRef>[] : _topicsOf(year);
+        final topics = year == null ? const <TopicRef>[] : _gameTopics(_gameId, year);
         final known = cur != null && widget.state.statusOf(cur.key) == TopicStatus.known;
         return _Centered(
           title: 'Round finished',

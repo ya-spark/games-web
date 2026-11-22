@@ -311,10 +311,26 @@ try { var t = localStorage.getItem('amc.theme'); if (t === 'light' || t === 'dar
     var l = cat.years && cat.years[String(year)];
     return Array.isArray(l) ? l : [];
   }
+  /* B-13: the topics of the year this game can play (enough questions). A game with no `playable` data (older catalog)
+     plays every topic. */
+  function gameTopics(g, year) {
+    var all = topicsOf(year);
+    var p = g && g.playable;
+    if (g && g.kind === 'craft' && p && typeof p === 'object') {
+      var ok = Array.isArray(p[String(year)]) ? p[String(year)] : [];
+      return all.filter(function (t) { return ok.indexOf(t.key) >= 0; });
+    }
+    return all;
+  }
+  /* False only for a Craft game known to have nothing to play in the chosen year (no year chosen: shown). */
+  function playsNow(g) {
+    if (g.kind !== 'craft' || typeof st.year !== 'number' || !g.playable || typeof g.playable !== 'object') return true;
+    return gameTopics(g, st.year).length > 0;
+  }
   function ownIds(g) { return [g.gameId, g.slug + '/' + g.gameId, g.slug + g.gameId]; }
   function topicFor(g) {
     if (typeof st.year !== 'number') return null;
-    var list = topicsOf(st.year);
+    var list = gameTopics(g, st.year);
     if (!list.length) return null;
     return P.defaultTopic(list, st, ownIds(g));
   }
@@ -342,7 +358,7 @@ try { var t = localStorage.getItem('amc.theme'); if (t === 'light' || t === 'dar
   }
   function topicLine(g) {
     if (g.kind !== 'craft' || typeof st.year !== 'number') return '';
-    var list = topicsOf(st.year);
+    var list = gameTopics(g, st.year);
     if (!list.length) return '';
     if (P.allKnown(list, st)) return 'All topics known';
     var t = topicFor(g);
@@ -413,6 +429,8 @@ try { var t = localStorage.getItem('amc.theme'); if (t === 'light' || t === 'dar
     if (!loadedOk) return;
     var all = cat.games.filter(function (g) { return g && typeof g.title === 'string' && typeof g.link === 'string' && (g.kind === 'craft' || g.kind === 'mind'); });
     var q = query.trim().toLowerCase();
+    /* B-13: never list a game that has nothing to play for the chosen year (its direct link still opens). */
+    all = all.filter(playsNow);
     var shown = q ? all.filter(function (g) { return matches(g, q); }) : all;
     var craft = sortCraft(shown.filter(function (g) { return g.kind === 'craft'; }));
     var mind = shown.filter(function (g) { return g.kind === 'mind'; });
