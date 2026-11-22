@@ -161,12 +161,12 @@ const Map<String, GameRules> webRulesData = {
     'Read the sentence out loud in your head with each choice.',
     'Check the whole sentence, not just the gap.',
   ]),
-  'equation_builder': GameRules('Equation builder', [
-    'Build a sum from the tiles so that it equals the target number.',
-    'Any sum that works is a right answer.',
+  'equation_builder': GameRules('Bridge builder', [
+    'The toy robot is stuck at a gap. Build a sum from the tiles so that it equals the number on the sign.',
+    'Drag a tile into a slot, or tap a tile and then a slot. Any sum that works lays a plank and the robot rolls across.',
   ], [
     'Start with the biggest tile that fits.',
-    'Try different tiles if you get stuck.',
+    'A sum that is not right falls back and you can try again.',
   ]),
   'word_grid': GameRules('Word search and crossword', [
     'Choose word search or crossword on the start screen.',
