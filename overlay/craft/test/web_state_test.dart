@@ -48,9 +48,19 @@ void main() {
     }
   });
 
+  test('a saved last game series_builder migrates to domino_chain', () {
+    final s = WebState.parse('{"v":1,"last":{"game":"series_builder","topic":"maths/1/a"},"byGame":{"series_builder":"maths/1/a"}}');
+    expect(s.lastGame, 'domino_chain');
+    expect(s.byGame, {'domino_chain': 'maths/1/a'});
+    expect(s.encode(), isNot(contains('series_builder')));
+  });
+
   test('the old link of a renamed game opens the new id', () {
     expect(WebLink.fromUri(Uri.parse('https://x/games/scout/#/play/equation_builder/maths/3/money')).segments,
         ['play', 'bridge_builder', 'maths', '3', 'money']);
+    expect(WebLink.fromUri(Uri.parse('https://x/games/scout/#/play/series_builder/maths/1/patterns')).segments,
+        ['play', 'domino_chain', 'maths', '1', 'patterns']);
+    expect(WebLink.fromUri(Uri.parse('https://x/games/scout/#/play/domino_chain')).segments, ['play', 'domino_chain']);
     expect(WebLink.fromUri(Uri.parse('https://x/games/scout/#/play/bridge_builder')).segments, ['play', 'bridge_builder']);
     expect(WebLink.fromUri(Uri.parse('https://x/games/scout/#/play/snake')).segments, ['play', 'snake']);
   });

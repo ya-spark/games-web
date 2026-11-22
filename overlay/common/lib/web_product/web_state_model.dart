@@ -10,7 +10,10 @@ import 'dart:convert';
 /// Game ids that were renamed (owner, 2026-11-22: a game's id is its name): old id to new id. Kept in step with
 /// `renamedGameIds` in game_core (this file stays free of imports so every family can use it). A saved state under an
 /// old id is read as the new one; the new id wins when both are present. The next save writes the new id only.
-const Map<String, String> renamedGameIds = {'equation_builder': 'bridge_builder'};
+const Map<String, String> renamedGameIds = {
+  'equation_builder': 'bridge_builder',
+  'series_builder': 'domino_chain',
+};
 
 enum TopicStatus { fresh, practising, known }
 
