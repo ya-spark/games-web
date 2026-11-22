@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My stars | Active Mind Craft</title>
+<meta name="description" content="Your learning trail: one star for each topic of your year. Stars light up as you practise and learn.">
+<script>
+try { var t = localStorage.getItem('amc.theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) { /* storage blocked */ }
+</script>
+<style>
+  :root { --bg:#0B1020; --sky:#0F1733; --ink:#EEF2FF; --muted:#A9B4D0; --line:#35416A; --dim:#4A5788; --glow:#FFD86B; --half:#7AB2FF; --focus:#FFC24D; --surface:#151C33; }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  a { color: inherit; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #101A44; flex-wrap: wrap; }
+  header a.back { color: #fff; text-decoration: none; font-weight: 600; padding: 8px 12px; border-radius: 10px; border: 1px solid #7C8FD6; }
+  header h1 { font-size: 1.15rem; margin: 0; flex: 1; }
+  header select { background: #1E2745; color: #fff; border: 1px solid #7C8FD6; border-radius: 10px; padding: 8px 10px; }
+  main { max-width: 1000px; margin: 0 auto; padding: 16px; }
+  .sum { color: var(--muted); margin: 0 0 12px; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin: 0 0 12px; padding: 0; list-style: none; color: var(--muted); font-size: .9rem; }
+  .legend span { display: inline-block; width: 14px; height: 14px; border-radius: 50%; margin-right: 6px; vertical-align: -2px; border: 2px solid var(--dim); }
+  .legend .k { background: var(--glow); border-color: var(--glow); box-shadow: 0 0 8px var(--glow); }
+  .legend .p { background: linear-gradient(90deg, var(--half) 50%, transparent 50%); border-color: var(--half); }
+  .sky { background: radial-gradient(900px 500px at 30% 0, #1B2A5E 0, var(--sky) 70%); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+  svg { display: block; width: 100%; height: auto; }
+  .edge { stroke: var(--dim); stroke-width: 1.5; opacity: .7; }
+  .edge.lit { stroke: var(--glow); opacity: .9; }
+  .star a { cursor: pointer; }
+  .star circle.core { fill: var(--sky); stroke: var(--dim); stroke-width: 3; }
+  .star.practising circle.core { fill: var(--half); stroke: var(--half); fill-opacity: .55; }
+  .star.known circle.core { fill: var(--glow); stroke: var(--glow); }
+  .star.known circle.halo { fill: var(--glow); opacity: .25; }
+  .star text { fill: var(--ink); font-size: 13px; text-anchor: middle; pointer-events: none; }
+  .star:hover circle.core, .star a:focus-visible circle.core { stroke: #fff; }
+  .row { font-size: .95rem; color: var(--muted); margin: 12px 0 0; }
+  .note { margin: 16px 0 0; color: var(--muted); font-size: .9rem; }
+  @media (prefers-reduced-motion: no-preference) { .star.known circle.halo { animation: tw 3s ease-in-out infinite; } @keyframes tw { 50% { opacity: .4; } } }
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="./">Games</a>
+  <h1>My stars</h1>
+  <label class="sr" for="yr">Year</label>
+  <select id="yr"></select>
+</header>
+<main>
+  <p class="sr" id="status" role="status" aria-live="polite"></p>
+  <p class="sum" id="sum">Loading your stars...</p>
+  <ul class="legend" aria-hidden="true">
+    <li><span></span>New</li><li><span class="p"></span>Practising</li><li><span class="k"></span>Known</li>
+  </ul>
+  <div class="sky"><svg id="sky" viewBox="0 0 960 560" role="group" aria-label="Constellation of topics"></svg></div>
+  <p class="note">Stars are saved only in this browser. If you clear your browser data, they start again.</p>
+</main>
+<script src="_site/progress.js"></script>
+<script>
+(function () {
+  'use strict';
+  var NS = 'http://www.w3.org/2000/svg', $ = function (id) { return document.getElementById(id); };
+  var P = window.AMCProgress, st = P.load(), cat = null;
+
+  function yearName(y) { return y === 0 ? 'Foundation' : 'Year ' + y; }
+  function svgEl(n, attrs) { var e = document.createElementNS(NS, n); for (var k in attrs) e.setAttribute(k, attrs[k]); return e; }
+  function hash(s) { var h = 2166136261; s = String(s); for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h; }
+  function topicsOf(y) { var l = cat && cat.years && cat.years[String(y)]; return Array.isArray(l) ? l : []; }
+  function slugFor(y) {
+    var c = cat && Array.isArray(cat.craft) ? cat.craft : [], best = null, bd = 99;
+    c.forEach(function (a) {
+      if (!a || typeof a.slug !== 'string') return;
+      var d = y < a.minYear ? a.minYear - y : (y > a.maxYear ? y - a.maxYear : 0);
+      if (d < bd) { bd = d; best = a.slug; }
+    });
+    return best;
+  }
+
+  /* One arc of stars per subject, jittered by the topic key so the shape is stable. */
+  function layout(list) {
+    var subjects = [], by = {};
+    list.forEach(function (t) { if (!by[t.subject]) { by[t.subject] = []; subjects.push(t.subject); } by[t.subject].push(t); });
+    var pos = {}, W = 960, rowH = 560 / (subjects.length + 1);
+    subjects.forEach(function (s, r) {
+      var l = by[s], n = l.length, y0 = rowH * (r + 1);
+      l.forEach(function (t, i) {
+        var h = hash(t.key), x = 70 + (W - 140) * (n === 1 ? .5 : i / (n - 1));
+        var y = y0 + Math.sin(i * 1.1 + r) * 55 + ((h % 41) - 20);
+        pos[t.key] = { x: x, y: Math.max(40, Math.min(520, y)) };
+      });
+    });
+    return { subjects: subjects, by: by, pos: pos };
+  }
+
+  function draw() {
+    var y = st.year, svg = $('sky');
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var list = topicsOf(y);
+    if (typeof y !== 'number' || !list.length) {
+      $('sum').textContent = typeof y !== 'number' ? 'Choose a year to see your stars.' : 'No topics for this year yet.';
+      return;
+    }
+    var L = layout(list), known = 0, prac = 0;
+    var slug = slugFor(y);
+    L.subjects.forEach(function (s) {
+      var l = L.by[s];
+      for (var i = 1; i < l.length; i++) {
+        var a = L.pos[l[i - 1].key], b = L.pos[l[i].key];
+        var lit = P.statusOf(st, l[i - 1].key) === 'known' && P.statusOf(st, l[i].key) === 'known';
+        svg.appendChild(svgEl('line', { class: 'edge' + (lit ? ' lit' : ''), x1: a.x, y1: a.y, x2: b.x, y2: b.y }));
+      }
+    });
+    list.forEach(function (t) {
+      var s = P.statusOf(st, t.key), p = L.pos[t.key];
+      if (s === 'known') known++; else if (s === 'practising') prac++;
+      var name = t.name || t.topic, label = name + ', ' + yearName(y) + ', ' + (s === 'fresh' ? 'new' : s);
+      var g = svgEl('g', { class: 'star ' + s });
+      var a = svgEl('a', { href: slug ? slug + '/#/learn/' + t.subject + '/' + y + '/' + t.topic : './', 'aria-label': label });
+      a.appendChild(svgEl('circle', { class: 'halo', cx: p.x, cy: p.y, r: 22, fill: 'none' }));
+      a.appendChild(svgEl('circle', { class: 'core', cx: p.x, cy: p.y, r: 11 }));
+      var tx = svgEl('text', { x: p.x, y: p.y + 30 }); tx.textContent = name.length > 22 ? name.slice(0, 21) + '…' : name;
+      a.appendChild(tx);
+      var title = svgEl('title', {}); title.textContent = label; a.appendChild(title);
+      g.appendChild(a); svg.appendChild(g);
+    });
+    var msg = yearName(y) + ': ' + known + ' of ' + list.length + ' stars lit' + (prac ? ', ' + prac + ' practising' : '') + '.';
+    $('sum').textContent = msg; $('status').textContent = msg;
+  }
+
+  function years() {
+    var sel = $('yr'), ys = Object.keys(cat.years || {}).map(Number).filter(P.validYear).sort(function (a, b) { return a - b; });
+    ys.forEach(function (y) { var o = document.createElement('option'); o.value = y; o.textContent = yearName(y); sel.appendChild(o); });
+    if (typeof st.year !== 'number' && ys.length) st.year = ys[0];
+    sel.value = String(st.year);
+    sel.addEventListener('change', function () { P.setYear(st, Number(sel.value)); P.save(st); draw(); });
+  }
+
+  fetch('catalog.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('http'); return r.json(); })
+    .then(function (d) { cat = d; years(); draw(); })
+    .catch(function () { $('sum').textContent = 'Could not load your stars. Check your connection and reload.'; });
+})();
+</script>
+</body>
+</html>
