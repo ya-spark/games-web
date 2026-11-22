@@ -13,6 +13,7 @@ import 'dart:convert';
 const Map<String, String> renamedGameIds = {
   'equation_builder': 'bridge_builder',
   'series_builder': 'domino_chain',
+  'snake': 'parcel_train',
 };
 
 enum TopicStatus { fresh, practising, known }

@@ -4,7 +4,7 @@
     python3 scripts/patch_renamed_games.py <app copy>
 
 Owner rule (2026-11-22): a game's folder, package and id are its name. equation_builder became bridge_builder and
-series_builder became domino_chain in game-factory. The apps are paused and keep pinning an older game-factory commit
+series_builder became domino_chain and snake became parcel_train in game-factory. The apps are paused and keep pinning an older game-factory commit
 that still has the old packages; the web builds use the current game-factory (factory.ref), where only the new
 packages exist. So build_game.sh runs this on the copy, right after copying the app and BEFORE the overlay (the overlay
 itself mentions the old ids on purpose, to migrate saved data): for each renamed game it rewrites the pubspec dependency
@@ -33,6 +33,27 @@ GAMES = [
         "registry": "package:game_bridge_builder/bridge_builder.dart",
     },
     {
+        "label": "snake -> parcel_train",
+        "old_pkg": "game_snake",
+        "old_path": "games/snake",
+        "new_pkg": "game_parcel_train",
+        "new_path": "games/parcel_train",
+        "regex": True,
+        # word boundaries keep game_snake_series, 'snake_series' and its classes (another game) untouched
+        "renames": [
+            (r"game_snake\b", "game_parcel_train"),
+            (r"games/snake\b", "games/parcel_train"),
+            (r"\bsnake\.dart\b", "parcel_train.dart"),
+            (r"(['\"])snake\1", r"\1parcel_train\1"),
+            (r"'Snake'", "'Parcel train'"),
+            (r"\bSnakeScreen\b", "ParcelTrainScreen"),
+            (r"\bsnakeStarScores\b", "trainStarScores"),
+        ],
+        "registry": "package:game_parcel_train/parcel_train.dart",
+        "art": "site/art/parcel_train.svg",
+        "art_id": "parcel_train",
+    },
+    {
         "label": "series_builder -> domino_chain",
         "old_pkg": "game_series_builder",
         "old_path": "games/series_builder",
@@ -49,35 +70,39 @@ GAMES = [
 ]
 
 
-def rewrite(text, renames):
+def rewrite(text, renames, regex=False):
     for old, new in renames:
-        text = text.replace(old, new)
+        text = re.sub(old, new, text) if regex else text.replace(old, new)
     return text
 
 
 def patch(app, g):
     renames = g["renames"]
-    old = re.compile("|".join(re.escape(o) for o, _ in renames))
+    regex = g.get("regex", False)
+    old = re.compile("|".join(o if regex else re.escape(o) for o, _ in renames))
+    # `\b`: game_snake is not game_snake_series (a different game that keeps its name)
+    old_pkg = re.compile(re.escape(g["old_pkg"]) + r"\b")
+    old_path = re.compile("path: " + re.escape(g["old_path"]) + r"\b")
     pub = app / "pubspec.yaml"
     s = pub.read_text()
-    if g["old_pkg"] not in s:
+    if not old_pkg.search(s):
         # a Craft app that lists the game uses the new name already; any other app does not list it at all
         assert not old.search(s), "pubspec.yaml mentions the old game name but not its package: %s" % pub
         print("patch_renamed_games: pubspec has no %s dependency, nothing to rename" % g["old_pkg"])
         return
     block = re.search(re.escape(g["old_pkg"]) + r":\s*\n\s*git:\s*\n(?:\s+\w+:[^\n]*\n)+", s)
     assert block, "%s dependency block not found in %s" % (g["old_pkg"], pub)
-    assert "path: " + g["old_path"] in block.group(0), "unexpected path in the dependency block: " + block.group(0)
-    pub.write_text(rewrite(s, renames))
+    assert old_path.search(block.group(0)), "unexpected path in the dependency block: " + block.group(0)
+    pub.write_text(rewrite(s, renames, regex))
     s2 = pub.read_text()
-    assert g["new_pkg"] + ":" in s2 and "path: " + g["new_path"] in s2 and g["old_pkg"] not in s2 and \
-        "path: " + g["old_path"] not in s2, "pubspec rewrite failed"
+    assert g["new_pkg"] + ":" in s2 and "path: " + g["new_path"] in s2 and not old_pkg.search(s2) and \
+        not old_path.search(s2), "pubspec rewrite failed"
     changed = 0
     for sub in ("lib", "test"):
         for f in sorted((app / sub).rglob("*.dart")) if (app / sub).is_dir() else []:
             t = f.read_text()
             if old.search(t):
-                f.write_text(rewrite(t, renames))
+                f.write_text(rewrite(t, renames, regex))
                 changed += 1
     assert changed, "pubspec listed the game but no Dart file in lib/ or test/ referenced it"
     left = [str(f) for sub in ("lib", "test") if (app / sub).is_dir() for f in (app / sub).rglob("*.dart")
@@ -85,6 +110,16 @@ def patch(app, g):
     assert not left, "old names left in: %s" % left
     reg = [f for f in (app / "lib").rglob("*.dart") if g["registry"] in f.read_text()]
     assert reg, "no registry imports %s after the rewrite" % g["registry"]
+    if g.get("art"):
+        # the app's own tile art still draws the old picture (a snake): swap in the new game's tile art
+        src = (Path(__file__).resolve().parent.parent / g["art"]).read_text()
+        art = app / "lib" / "ui" / "kit" / "game_art_data.dart"
+        if art.is_file():
+            t = art.read_text()
+            key = re.escape("'" + g["art_id"] + "'")
+            t2, n = re.subn(key + r": r\'\'\'.*?\'\'\'", lambda m: "'" + g["art_id"] + "': r\'\'\'" + " ".join(src.split()) + "\'\'\'", t, count=1, flags=re.S)
+            assert n == 1, "tile art entry %s not found in %s" % (g["art_id"], art)
+            art.write_text(t2)
     print("patch_renamed_games: %s in pubspec and %d Dart files" % (g["label"], changed))
 
 

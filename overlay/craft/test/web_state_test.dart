@@ -33,11 +33,11 @@ void main() {
 
   test('a state saved under a renamed game id is read as the new id, and saved under it', () {
     final s = WebState.parse(
-        '{"v":1,"last":{"game":"equation_builder","topic":"maths/3/b"},"byGame":{"equation_builder":"maths/3/b","snake":"maths/3/a"}}');
+        '{"v":1,"last":{"game":"equation_builder","topic":"maths/3/b"},"byGame":{"equation_builder":"maths/3/b","memory_match":"maths/3/a"}}');
     expect(s.lastGame, 'bridge_builder');
     expect(s.byGame['bridge_builder'], 'maths/3/b');
     expect(s.byGame.containsKey('equation_builder'), isFalse);
-    expect(s.byGame['snake'], 'maths/3/a');
+    expect(s.byGame['memory_match'], 'maths/3/a');
     expect(s.encode(), isNot(contains('equation_builder')));
     // both present: the new id wins, whichever order the keys come in
     for (final raw in [
@@ -55,6 +55,15 @@ void main() {
     expect(s.encode(), isNot(contains('series_builder')));
   });
 
+  test('Snake became Parcel train: saved state and the old link follow', () {
+    final s = WebState.parse('{"v":1,"last":{"game":"snake","topic":"maths/1/a"},"byGame":{"snake":"maths/1/a"}}');
+    expect(s.lastGame, 'parcel_train');
+    expect(s.byGame, {'parcel_train': 'maths/1/a'});
+    expect(s.encode(), isNot(contains('snake')));
+    expect(WebLink.fromUri(Uri.parse('https://x/games/presto/#/play/snake')).segments, ['play', 'parcel_train']);
+    expect(WebLink.fromUri(Uri.parse('https://x/games/presto/#/play/snake_series')).segments, ['play', 'snake_series']);
+  });
+
   test('the old link of a renamed game opens the new id', () {
     expect(WebLink.fromUri(Uri.parse('https://x/games/scout/#/play/equation_builder/maths/3/money')).segments,
         ['play', 'bridge_builder', 'maths', '3', 'money']);
@@ -62,7 +71,7 @@ void main() {
         ['play', 'domino_chain', 'maths', '1', 'patterns']);
     expect(WebLink.fromUri(Uri.parse('https://x/games/scout/#/play/domino_chain')).segments, ['play', 'domino_chain']);
     expect(WebLink.fromUri(Uri.parse('https://x/games/scout/#/play/bridge_builder')).segments, ['play', 'bridge_builder']);
-    expect(WebLink.fromUri(Uri.parse('https://x/games/scout/#/play/snake')).segments, ['play', 'snake']);
+    expect(WebLink.fromUri(Uri.parse('https://x/games/scout/#/play/memory_match')).segments, ['play', 'memory_match']);
   });
 
   test('odd values are dropped and unknown ids are harmless', () {
