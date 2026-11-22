@@ -86,6 +86,7 @@ GAMES = [
             (r"games/true_false\b", "games/judge_bot"),
             (r"\btrue_false\.dart\b", "judge_bot.dart"),
             (r"\btrueFalseGame\b", "judgeBotGame"),
+            (r"\btrueFalseGameFor\b", "judgeBotGameFor"),
             (r"(['\"])true_false\1", r"\1judge_bot\1"),
             (r"'True or false'", "'Judge bot'"),
         ],
