@@ -4,6 +4,8 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
+import 'package:flutter/services.dart';
 
 import '../core/services.dart';
 import 'package:game_core/engine/engine.dart';
@@ -57,7 +59,11 @@ enum _Screen { playing, needYear, allDone, ended, empty, unsupported }
 
 /// A game that has no questions for the chosen topic, and the games that do (proposed instead; never the Quick quiz).
 class _Unsupported {
-  const _Unsupported(this.game, this.topic, this.mixed, this.alternatives, [this.playable = const <TopicRef>[]]);
+  const _Unsupported(this.game, this.topic, this.mixed, this.alternatives,
+      [this.playable = const <TopicRef>[], this.otherYears = const <(int, TopicRef)>[]]);
+
+  /// When the game plays no topic this year: each other year it does play, with the first topic it can run there.
+  final List<(int, TopicRef)> otherYears;
 
   /// The topics of the same year this game can run (teaching order, Maths then English).
   final List<TopicRef> playable;
@@ -105,6 +111,10 @@ class _CraftShellState extends State<CraftShell> {
   int _epoch = 0;
   String? _message;
 
+  /// Set by a year button on the unsupported screen: when the saved year changes, open this game on this topic
+  /// (the first one the game can play in that year) instead of the default topic.
+  (String, TopicRef)? _afterYear;
+
   @override
   void initState() {
     super.initState();
@@ -127,7 +137,15 @@ class _CraftShellState extends State<CraftShell> {
   @override
   void didUpdateWidget(CraftShell old) {
     super.didUpdateWidget(old);
-    if (old.year != widget.year) _begin(_gameId);
+    if (old.year != widget.year) {
+      final after = _afterYear;
+      _afterYear = null;
+      if (after != null && after.$2.year == widget.year) {
+        _begin(after.$1, topic: after.$2);
+      } else {
+        _begin(_gameId);
+      }
+    }
   }
 
   TopicRef? _find(List<TopicRef> topics, String subject, String id) {
@@ -241,10 +259,23 @@ class _CraftShellState extends State<CraftShell> {
         for (final o in topics)
           if (o.key != t?.key && _session(game, o.subject, year, o.id) != null) o,
       ];
+      // None this year: the other years it does play, each with the first topic it can run there (same check).
+      final otherYears = <(int, TopicRef)>[];
+      if (playable.isEmpty) {
+        for (final y in [...widget.years]..sort()) {
+          if (y == year) continue;
+          for (final o in _topicsOf(y)) {
+            if (_session(game, o.subject, y, o.id) != null) {
+              otherYears.add((y, o));
+              break;
+            }
+          }
+        }
+      }
       setState(() {
         _gameId = gameId;
         _screen = _Screen.unsupported;
-        _unsupported = _Unsupported(game, t, mixed, alts, playable);
+        _unsupported = _Unsupported(game, t, mixed, alts, playable, otherYears);
       });
       return;
     }
@@ -469,64 +500,7 @@ class _CraftShellState extends State<CraftShell> {
           ),
         );
       case _Screen.unsupported:
-        final u = _unsupported!;
-        final topicName = u.topic?.title ?? 'this topic';
-        return _Centered(
-          title: '${u.game.title} has no questions for $topicName yet',
-          text: u.alternatives.isEmpty ? 'Try another topic, or use Learn.' : 'Try one of these games instead:',
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                alignment: WrapAlignment.center,
-                children: [
-                  for (final g in u.alternatives)
-                    _GameCard(
-                      key: Key('web.alt.${g.id}'),
-                      game: g,
-                      onTap: () => _begin(g.id, topic: u.topic, mixed: u.mixed),
-                    ),
-                ],
-              ),
-              if (u.playable.isNotEmpty) ...[
-                const SizedBox(height: 24),
-                Semantics(
-                  header: true,
-                  child: Text(
-                    'This game plays these topics',
-                    key: const Key('web.supported.title'),
-                    style: Theme.of(context).textTheme.titleMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 480),
-                  child: Column(
-                    key: const Key('web.supported.list'),
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      for (final o in u.playable)
-                        Card(
-                          margin: const EdgeInsets.symmetric(vertical: 3),
-                          clipBehavior: Clip.antiAlias,
-                          child: ListTile(
-                            key: Key('web.supported.${o.subject}.${o.id}'),
-                            title: Text(o.title),
-                            subtitle: Text(_subjectLabel(o.subject)),
-                            trailing: const Icon(Icons.chevron_right),
-                            onTap: () => _begin(u.game.id, topic: o),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
-        );
+        return _unsupportedBody(_unsupported!, year);
       case _Screen.empty:
         return _Centered(title: 'Nothing to play here yet', text: _message);
       case _Screen.ended:
@@ -586,6 +560,151 @@ class _CraftShellState extends State<CraftShell> {
     }
   }
 
+  /// The screen for a game that cannot run the chosen topic. Order: what this game plays (topics of this year, or the
+  /// years it does play), then the games that can run the topic. Compact so it fits a 1280x720 window without scrolling.
+  Widget _unsupportedBody(_Unsupported u, int? year) {
+    final theme = Theme.of(context);
+    final yearName = year == null ? 'this year' : yearLabel(year);
+    final noTopicsThisYear = u.playable.isEmpty;
+    final noYearAtAll = noTopicsThisYear && u.otherYears.isEmpty;
+    final String title;
+    final String? text;
+    if (!noTopicsThisYear) {
+      title = '${u.game.title} has no questions for ${u.topic?.title ?? 'this topic'} yet';
+      text = null;
+    } else if (noYearAtAll) {
+      title = 'This game has no questions yet';
+      text = u.alternatives.isEmpty ? 'Try Learn instead.' : 'Try one of the games below.';
+    } else {
+      title = '${u.game.title} has no topics for $yearName';
+      text = null;
+    }
+    Widget heading(String t, Key key) => Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Semantics(
+            header: true,
+            child: Text(t, key: key, style: theme.textTheme.titleMedium, textAlign: TextAlign.center),
+          ),
+        );
+    // One key per button, in the order on screen: 1 to 9, then 0, then a, b, c ...
+    const keyNames = '1234567890abcdefghijklmnopqrstuvwxyz';
+    final actions = <String, VoidCallback>{};
+    String? nextKey(VoidCallback f) {
+      if (actions.length >= keyNames.length) return null;
+      final k = keyNames[actions.length];
+      actions[k] = f;
+      return k;
+    }
+
+    void pickYear((int, TopicRef) e) {
+      _afterYear = (u.game.id, e.$2);
+      widget.onYear(e.$1);
+    }
+
+    final sections = <Widget>[];
+    if (!noTopicsThisYear) {
+      sections.add(heading('This game plays these topics', const Key('web.supported.title')));
+      sections.add(
+        Semantics(
+          role: SemanticsRole.list,
+          child: Wrap(
+            key: const Key('web.supported.list'),
+            spacing: 8,
+            runSpacing: 6,
+            alignment: WrapAlignment.center,
+            children: [
+              for (final o in u.playable)
+                _ChoiceTile(
+                  key: Key('web.supported.${o.subject}.${o.id}'),
+                  label: o.title,
+                  note: _subjectLabel(o.subject),
+                  semantics: 'Play ${u.game.title} on ${o.title}, ${_subjectLabel(o.subject)}',
+                  onTap: () => _begin(u.game.id, topic: o),
+                  shortcut: nextKey(() => _begin(u.game.id, topic: o)),
+                ),
+            ],
+          ),
+        ),
+      );
+    } else if (!noYearAtAll) {
+      sections.add(heading('It plays these years', const Key('web.years.title')));
+      sections.add(
+        Semantics(
+          role: SemanticsRole.list,
+          child: Wrap(
+            key: const Key('web.years.list'),
+            spacing: 8,
+            runSpacing: 6,
+            alignment: WrapAlignment.center,
+            children: [
+              for (final e in u.otherYears)
+                _ChoiceTile(
+                  key: Key('web.years.${e.$1}'),
+                  label: yearLabel(e.$1),
+                  semantics: 'Play ${u.game.title} in ${yearLabel(e.$1)}, starting with ${e.$2.title}',
+                  onTap: () => pickYear(e),
+                  shortcut: nextKey(() => pickYear(e)),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
+    if (u.alternatives.isNotEmpty) {
+      if (sections.isNotEmpty) sections.add(const SizedBox(height: 14));
+      sections.add(heading(
+          'Try one of these games instead', const Key('web.alt.title')));
+      sections.add(
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          alignment: WrapAlignment.center,
+          children: [
+            for (final g in u.alternatives)
+              _GameCard(
+                key: Key('web.alt.${g.id}'),
+                game: g,
+                onTap: () => _begin(g.id, topic: u.topic, mixed: u.mixed),
+                shortcut: nextKey(() => _begin(g.id, topic: u.topic, mixed: u.mixed)),
+              ),
+          ],
+        ),
+      );
+    }
+    if (actions.isNotEmpty) {
+      sections.add(const SizedBox(height: 10));
+      sections.add(Text('Press the key shown on a button, or Tab and Enter.',
+          key: const Key('web.keys.hint'), style: theme.textTheme.bodySmall, textAlign: TextAlign.center));
+    }
+    return Focus(
+      autofocus: true,
+      onKeyEvent: (node, event) {
+        if (event is! KeyDownEvent) return KeyEventResult.ignored;
+        if (HardwareKeyboard.instance.isControlPressed ||
+            HardwareKeyboard.instance.isMetaPressed ||
+            HardwareKeyboard.instance.isAltPressed) {
+          return KeyEventResult.ignored;
+        }
+        final c = (event.character ?? event.logicalKey.keyLabel).toLowerCase();
+        final f = actions[c];
+        if (f == null) return KeyEventResult.ignored;
+        f();
+        return KeyEventResult.handled;
+      },
+      child: _Centered(
+        title: title,
+        text: text,
+        compact: true,
+        child: sections.isEmpty
+            ? null
+            : ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1000),
+                child: Column(mainAxisSize: MainAxisSize.min, children: sections),
+              ),
+      ),
+    );
+  }
+
   /// True while a game is on screen (the rules dialog may then open by itself).
   bool get _showing => _screen == _Screen.playing && _round != null;
 
@@ -605,7 +724,8 @@ class _CraftShellState extends State<CraftShell> {
 }
 
 class _Centered extends StatelessWidget {
-  const _Centered({required this.title, this.text, this.child});
+  const _Centered({required this.title, this.text, this.child, this.compact = false});
+  final bool compact;
   final String title;
   final String? text;
   final Widget? child;
@@ -613,29 +733,91 @@ class _Centered extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(compact ? 16 : 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(title, style: Theme.of(context).textTheme.headlineSmall, textAlign: TextAlign.center),
-              if (text != null) ...[const SizedBox(height: 8), Text(text!, textAlign: TextAlign.center)],
-              if (child != null) ...[const SizedBox(height: 16), child!],
+              Semantics(
+                header: true,
+                child: Text(title,
+                    style: compact ? Theme.of(context).textTheme.titleLarge : Theme.of(context).textTheme.headlineSmall,
+                    textAlign: TextAlign.center),
+              ),
+              if (text != null) ...[const SizedBox(height: 6), Text(text!, textAlign: TextAlign.center)],
+              if (child != null) ...[SizedBox(height: compact ? 12 : 16), child!],
             ],
           ),
         ),
       );
 }
 
-/// A game as a card with its art and name, like the tiles on the home page.
+/// A compact button for a topic or a year: at least 44 dp high, focusable (Tab, Enter, Space) with a visible focus ring.
+class _ChoiceTile extends StatelessWidget {
+  const _ChoiceTile(
+      {super.key, required this.label, required this.semantics, required this.onTap, this.note, this.shortcut});
+  final String? shortcut;
+  final String label;
+  final String? note;
+  final String semantics;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(10));
+    return Semantics(
+      role: SemanticsRole.listItem,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 44, minWidth: 44, maxWidth: 300),
+        child: Material(
+          color: scheme.surfaceContainerHighest,
+          shape: shape,
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            customBorder: shape,
+            focusColor: scheme.primary.withValues(alpha: 0.28),
+            child: Semantics(
+              button: true,
+              link: true,
+              label: semantics,
+              excludeSemantics: true,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (shortcut != null) ...[_KeyBadge(shortcut!), const SizedBox(width: 8)],
+                    Flexible(child: Text(label, maxLines: 2, overflow: TextOverflow.ellipsis)),
+                    if (note != null) ...[
+                      const SizedBox(width: 8),
+                      Text(note!, style: Theme.of(context).textTheme.bodySmall),
+                    ],
+                    const SizedBox(width: 4),
+                    const Icon(Icons.chevron_right, size: 18),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A game as a card with its art and name, like the tiles on the home page (compact: 120 dp wide).
 class _GameCard extends StatelessWidget {
-  const _GameCard({super.key, required this.game, required this.onTap});
+  const _GameCard({super.key, required this.game, required this.onTap, this.shortcut});
+  final String? shortcut;
   final MiniGame game;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) => SizedBox(
-        width: 150,
+        width: 120,
         child: Card(
+          margin: EdgeInsets.zero,
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: onTap,
@@ -644,13 +826,18 @@ class _GameCard extends StatelessWidget {
               label: 'Play ${game.title}',
               excludeSemantics: true,
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(8),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox(height: 96, child: DsGameArt(game.id)),
-                    const SizedBox(height: 8),
-                    Text(game.title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleSmall),
+                    SizedBox(height: 64, child: DsGameArt(game.id)),
+                    const SizedBox(height: 4),
+                    if (shortcut != null) ...[_KeyBadge(shortcut!), const SizedBox(height: 2)],
+                    Text(game.title,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleSmall),
                   ],
                 ),
               ),
@@ -658,4 +845,26 @@ class _GameCard extends StatelessWidget {
           ),
         ),
       );
+}
+
+/// The key that does the same as a button, drawn on it (for example "1").
+class _KeyBadge extends StatelessWidget {
+  const _KeyBadge(this.keyName);
+  final String keyName;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      key: Key('web.shortcut.$keyName'),
+      constraints: const BoxConstraints(minWidth: 22),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        border: Border.all(color: scheme.outline),
+        borderRadius: BorderRadius.circular(5),
+      ),
+      child: Text(keyName.toUpperCase(),
+          textAlign: TextAlign.center, style: Theme.of(context).textTheme.labelMedium),
+    );
+  }
 }

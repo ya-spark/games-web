@@ -2,6 +2,7 @@
 // copies this file into the app's test folder with the overlay and replaces APP_PKG with the app's package name
 // (the three Craft apps have different ones).
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:APP_PKG/core/services.dart';
@@ -85,8 +86,8 @@ class _HarnessState extends State<_Harness> {
 }
 
 Future<void> _pump(WidgetTester tester, WebState state,
-    {int? year, WebLinkLaunch launch = WebLinkLaunch.none, List<PoolItem> extra = const []}) async {
-  tester.view.physicalSize = const Size(900, 1400);
+    {int? year, WebLinkLaunch launch = WebLinkLaunch.none, List<PoolItem> extra = const [], Size size = const Size(900, 1400)}) async {
+  tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   final s = await buildFakeServices(contentEnabled: true);
@@ -159,7 +160,7 @@ void main() {
     final state = WebState();
     await _pump(tester, state,
         year: 3, launch: WebLinkLaunch(gameId: blocked.game.id, subject: 'maths', year: 3, topic: 'alpha'));
-    expect(find.textContaining('has no questions for Alpha topic yet'), findsOneWidget);
+    expect(find.text('This game has no questions yet'), findsOneWidget); // plays nothing in any year
     expect(find.byKey(const Key('web.note')), findsNothing);
     expect(find.byType(Card), findsWidgets); // the proposals are cards with art, like the home page
     expect(state.statusOf('maths/3/alpha'), TopicStatus.fresh); // nothing was played
@@ -174,9 +175,14 @@ void main() {
     final state = WebState();
     await _pump(tester, state,
         year: 3, launch: WebLinkLaunch(gameId: blocked.game.id, subject: 'maths', year: 3, topic: 'alpha'));
-    expect(find.textContaining('has no questions for Alpha topic yet'), findsOneWidget);
     expect(find.byKey(const Key('web.supported.title')), findsNothing);
     expect(find.byKey(const Key('web.supported.list')), findsNothing);
+    // Nothing in any year: no year buttons, a plain message and the games below.
+    expect(find.textContaining('has no topics for'), findsNothing);
+    expect(find.text('This game has no questions yet'), findsOneWidget);
+    expect(find.text('Try one of the games below.'), findsOneWidget);
+    expect(find.byKey(const Key('web.years.title')), findsNothing);
+    expect(find.byKey(const Key('web.years.4')), findsNothing);
   });
 
   testWidgets('the unsupported screen lists the playable topics of this year only, in order, and a tap opens the game on it',
@@ -207,9 +213,15 @@ void main() {
     expect(find.byKey(const Key('web.supported.maths.alpha')), findsNothing); // the unsupported topic itself
     expect(find.byKey(const Key('web.supported.maths.beta')), findsNothing); // no items of the game's type
     expect(find.byKey(const Key('web.supported.maths.gamma')), findsNothing); // another year
-    expect(tester.getTopLeft(delta).dy, lessThan(tester.getTopLeft(zeta).dy)); // Maths then English
+    final dp = tester.getTopLeft(delta), zp = tester.getTopLeft(zeta);
+    expect(dp.dy < zp.dy || (dp.dy == zp.dy && dp.dx < zp.dx), isTrue); // Maths then English
     expect(find.text('Maths'), findsOneWidget);
     expect(find.text('English'), findsOneWidget);
+    // Topics come first, the games row (with its label) after them.
+    expect(tester.getTopLeft(find.byKey(const Key('web.supported.title'))).dy,
+        lessThan(tester.getTopLeft(find.byKey(const Key('web.alt.title'))).dy));
+    expect(find.text('Try one of these games instead'), findsOneWidget);
+    expect(tester.getSize(delta).height, greaterThanOrEqualTo(44));
     // The rows are ListTiles (focusable, Enter and Space activate them, visible focus); a tap opens this game on the topic.
     await tester.ensureVisible(delta);
     await tester.tap(delta);
@@ -226,5 +238,62 @@ void main() {
     await _pump(tester, state, year: 3);
     expect(find.byKey(const Key('web.bar.gameLabel')), findsOneWidget);
     expect(tester.widget<Text>(find.byKey(const Key('web.bar.gameName'))).data, ': Learn');
+  });
+
+  testWidgets('a game with no topic this year but one in another year: message, year buttons, a tap switches the year and opens its first topic',
+      (tester) async {
+    final blocked = appGames.entries.firstWhere((e) =>
+        e.game.access != GameAccess.coins &&
+        e.game.id != quickQuizGame.id &&
+        !e.game.itemTypes.contains(ItemType.mcq));
+    final type = blocked.game.itemTypes.first.name;
+    // Only Year 4 has items of the game's type: it plays nothing in Year 3 (the Word grid / Year 7 case).
+    final extra = [for (var i = 0; i < 40; i++) _item('y$i', 'maths', 4, 'gamma', type)];
+    final state = WebState();
+    await _pump(tester, state,
+        year: 3,
+        launch: WebLinkLaunch(gameId: blocked.game.id, subject: 'maths', year: 3, topic: 'alpha'),
+        extra: extra);
+    expect(find.text('${blocked.game.title} has no topics for Year 3'), findsOneWidget);
+    expect(find.byKey(const Key('web.years.title')), findsOneWidget);
+    expect(find.text('It plays these years'), findsOneWidget);
+    expect(find.byKey(const Key('web.supported.title')), findsNothing);
+    final y4 = find.byKey(const Key('web.years.4'));
+    expect(y4, findsOneWidget);
+    expect(find.byKey(const Key('web.years.3')), findsNothing); // this year is not offered
+    expect(find.bySemanticsLabel(RegExp('Play .* in Year 4, starting with Gamma topic')), findsOneWidget);
+    expect(tester.getSize(y4).height, greaterThanOrEqualTo(44));
+    expect(find.byKey(const Key('web.shortcut.1')), findsWidgets); // the key is shown on the button
+    await tester.sendKeyEvent(LogicalKeyboardKey.digit1); // the first button: the only year
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    tester.takeException();
+    expect(find.byKey(const Key('web.years.title')), findsNothing);
+    expect(state.statusOf('maths/4/gamma'), TopicStatus.practising);
+    expect(state.byGame[blocked.game.id], isNotNull);
+  });
+
+  testWidgets('fits 1280x720 without scrolling: five topics and many games', (tester) async {
+    final blocked = appGames.entries.firstWhere((e) =>
+        e.game.access != GameAccess.coins &&
+        e.game.id != quickQuizGame.id &&
+        !e.game.itemTypes.contains(ItemType.mcq));
+    final type = blocked.game.itemTypes.first.name;
+    final extra = [
+      for (final t in ['t1', 't2', 't3', 't4', 't5'])
+        for (var i = 0; i < 40; i++) _item('$t$i', 'maths', 3, t, type),
+    ];
+    final state = WebState();
+    await _pump(tester, state,
+        year: 3,
+        launch: WebLinkLaunch(gameId: blocked.game.id, subject: 'maths', year: 3, topic: 'alpha'),
+        extra: extra,
+        size: const Size(1280, 720));
+    expect(find.byKey(const Key('web.supported.list')), findsOneWidget);
+    final cards = find.byWidgetPredicate((w) => w.key is ValueKey<String> && (w.key as ValueKey<String>).value.startsWith('web.alt.') && (w.key as ValueKey<String>).value != 'web.alt.title');
+    expect(cards.evaluate().length, greaterThanOrEqualTo(5));
+    final vertical = find.byWidgetPredicate((w) => w is Scrollable && w.axisDirection == AxisDirection.down);
+    expect(vertical, findsOneWidget);
+    expect(tester.state<ScrollableState>(vertical).position.maxScrollExtent, 0);
   });
 }
