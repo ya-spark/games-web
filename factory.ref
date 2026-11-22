@@ -1,3 +1,3 @@
 # game-factory commit used by every web build (shared games and game_core), set by scripts/build_game.sh over the app pin.
-# U3 Bridge builder renamed from the old id (folder, package game_bridge_builder, id bridge_builder), 2026-11-22. Must be a commit on game-factory main. Delete the line to use each app's own pin (then patch_renamed_games.py is not run and the app needs its old package).
-756700c575661a4fcfb7db72699af3832585fcd0
+# B-03 Domino chain (folder, package game_domino_chain, id domino_chain; renamed from series_builder), 2026-11-22. Must be a commit on game-factory main. Delete the line to use each app's own pin (then patch_renamed_games.py is not run and the app needs its old packages).
+37470d7719241e578f5dea3c5315af59357b04a5
