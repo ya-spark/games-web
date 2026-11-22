@@ -7,6 +7,11 @@
 // ids that a build does not know are simply never looked up.
 import 'dart:convert';
 
+/// Game ids that were renamed (owner, 2026-11-22: a game's id is its name): old id to new id. Kept in step with
+/// `renamedGameIds` in game_core (this file stays free of imports so every family can use it). A saved state under an
+/// old id is read as the new one; the new id wins when both are present. The next save writes the new id only.
+const Map<String, String> renamedGameIds = {'equation_builder': 'bridge_builder'};
+
 enum TopicStatus { fresh, practising, known }
 
 String topicKey(String subject, int year, String topic) => '$subject/$year/$topic';
@@ -61,12 +66,17 @@ class WebState {
       final b = j['byGame'];
       if (b is Map) {
         b.forEach((k, v) {
-          if (k is String && v is String) s.byGame[k] = v;
+          if (k is String && v is String && !renamedGameIds.containsKey(k)) s.byGame[k] = v;
+        });
+        // renamed games: the old entry only fills in when the new id has none
+        b.forEach((k, v) {
+          final to = k is String ? renamedGameIds[k] : null;
+          if (to != null && v is String) s.byGame.putIfAbsent(to, () => v);
         });
       }
       final l = j['last'];
       if (l is Map) {
-        if (l['game'] is String) s.lastGame = l['game'] as String;
+        if (l['game'] is String) s.lastGame = renamedGameIds[l['game']] ?? l['game'] as String;
         if (l['topic'] is String) s.lastTopic = l['topic'] as String;
       }
       return s;

@@ -1,6 +1,7 @@
 // Tests of the web state model (W6). build_game.sh copies this file into the app's test folder with the overlay.
 import 'package:flutter_test/flutter_test.dart';
 
+import '../lib/web_product/web_link.dart';
 import '../lib/web_product/web_state_model.dart';
 
 void main() {
@@ -28,6 +29,30 @@ void main() {
     expect(t.statusOf('maths/3/b'), TopicStatus.practising);
     expect(t.lastGame, 'memory_match');
     expect(t.byGame['memory_match'], 'maths/3/b');
+  });
+
+  test('a state saved under a renamed game id is read as the new id, and saved under it', () {
+    final s = WebState.parse(
+        '{"v":1,"last":{"game":"equation_builder","topic":"maths/3/b"},"byGame":{"equation_builder":"maths/3/b","snake":"maths/3/a"}}');
+    expect(s.lastGame, 'bridge_builder');
+    expect(s.byGame['bridge_builder'], 'maths/3/b');
+    expect(s.byGame.containsKey('equation_builder'), isFalse);
+    expect(s.byGame['snake'], 'maths/3/a');
+    expect(s.encode(), isNot(contains('equation_builder')));
+    // both present: the new id wins, whichever order the keys come in
+    for (final raw in [
+      '{"v":1,"byGame":{"equation_builder":"old","bridge_builder":"new"}}',
+      '{"v":1,"byGame":{"bridge_builder":"new","equation_builder":"old"}}',
+    ]) {
+      expect(WebState.parse(raw).byGame, {'bridge_builder': 'new'});
+    }
+  });
+
+  test('the old link of a renamed game opens the new id', () {
+    expect(WebLink.fromUri(Uri.parse('https://x/games/scout/#/play/equation_builder/maths/3/money')).segments,
+        ['play', 'bridge_builder', 'maths', '3', 'money']);
+    expect(WebLink.fromUri(Uri.parse('https://x/games/scout/#/play/bridge_builder')).segments, ['play', 'bridge_builder']);
+    expect(WebLink.fromUri(Uri.parse('https://x/games/scout/#/play/snake')).segments, ['play', 'snake']);
   });
 
   test('odd values are dropped and unknown ids are harmless', () {

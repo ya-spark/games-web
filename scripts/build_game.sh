@@ -31,6 +31,9 @@ WEB_FACTORY_REF=""
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 mkdir -p "$TMP/app"
 tar -C "$APP" --exclude=.git --exclude=build --exclude=.dart_tool -cf - . | tar -C "$TMP/app" -xf -
+# Renamed games (equation_builder -> bridge_builder): the apps pin an older game-factory with the old package, the web
+# uses factory.ref where only the new one exists; patch the copy (before the overlay, which holds the old id on purpose).
+[ -n "$WEB_FACTORY_REF" ] && python3 "$ROOT/scripts/patch_renamed_games.py" "$TMP/app"
 [ -d "$ROOT/overlay/common/lib" ] && cp -R "$ROOT/overlay/common/lib/." "$TMP/app/lib/"
 cp -R "$ROOT/overlay/$FAMILY/lib/." "$TMP/app/lib/"
 [ -d "$ROOT/overlay/$FAMILY/test" ] && mkdir -p "$TMP/app/test" && cp -R "$ROOT/overlay/$FAMILY/test/." "$TMP/app/test/"
