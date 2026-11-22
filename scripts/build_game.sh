@@ -23,6 +23,11 @@ WEB_SHA="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
 # The games are packages in game-factory; the app's lock file says which commit of it this build uses.
 FACTORY_SHA="$(awk '/resolved-ref:/ {gsub(/"/,"",$2); r=$2} /url:.*game-factory/ {print r; exit}' "$APP/pubspec.lock" 2>/dev/null)"
 [ -n "$FACTORY_SHA" ] || FACTORY_SHA=unknown
+# factory.ref (this repo): the game-factory commit the WEB builds use for the shared games and game_core, whatever
+# the app pins (the apps are paused, owner 2026-11-22, so their pins do not move). Empty or missing = the app's own pin.
+WEB_FACTORY_REF=""
+[ -f "$ROOT/factory.ref" ] && WEB_FACTORY_REF="$(grep -Eo '^[0-9a-f]{40}' "$ROOT/factory.ref" | head -1 || true)"
+[ -n "$WEB_FACTORY_REF" ] && FACTORY_SHA="$WEB_FACTORY_REF"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 mkdir -p "$TMP/app"
 tar -C "$APP" --exclude=.git --exclude=build --exclude=.dart_tool -cf - . | tar -C "$TMP/app" -xf -
@@ -42,6 +47,17 @@ if [ "$FAMILY" = craft ]; then
     if [ -d "$d/assets/content" ]; then OTHERS+=("$d"); else echo "WARNING: no checkout of $other_slug at $d; its years are missing from $SLUG"; fi
   done < <(awk '$1=="-" && $2=="slug:" {s=$3} $1=="app:" {a=$2} $1=="family:" {if ($2=="craft") print s, a}' "$ROOT/games.yaml")
   [ "${#OTHERS[@]}" -gt 0 ] && python3 "$ROOT/scripts/merge_craft_content.py" "$TMP/app" "${OTHERS[@]}"
+fi
+if [ -n "$WEB_FACTORY_REF" ]; then
+  python3 - "$TMP/app/pubspec.yaml" "$WEB_FACTORY_REF" <<'PY'
+import re, sys
+p, ref = sys.argv[1], sys.argv[2]
+s = open(p).read()
+# every git dependency on game-factory: point its ref at the web's commit
+s, n = re.subn(r'(url:\s*https://github\.com/ya-spark/game-factory(?:\.git)?\s*\n(?:\s*path:[^\n]*\n)?\s*ref:\s*)[0-9a-f]{40}', r'\g<1>' + ref, s)
+print('factory.ref: moved %d game-factory refs to %s' % (n, ref[:7]))
+open(p, 'w').write(s)
+PY
 fi
 cd "$TMP/app"
 flutter pub get >/dev/null

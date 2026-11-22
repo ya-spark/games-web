@@ -78,3 +78,6 @@ game that is behind (it compares each game's `build-info.json` on the site with 
 - Superseded by W6 (2026-11-21): the browser now keeps the small state described above.
 - Not done yet: `presto`, `ranger`, `champion` (same overlays, not built or looked at yet), the minigames of the Craft apps beyond
   the Quick quiz, the public landing page, the ad slot, the build-and-publish workflow and the hosting container.
+
+## factory.ref
+`factory.ref` holds the game-factory commit that every web build uses for `game_core` and the shared games. `scripts/build_game.sh` rewrites the game-factory refs in its temporary copy of the app's `pubspec.yaml` (the app checkout and its pin stay as they are), and `build-info.json` reports it as `gamesCommit`. Move it with each game-factory change the web should have; it must be a commit on game-factory `main`.
