@@ -1,3 +1,3 @@
 # game-factory commit used by every web build (shared games and game_core), set by scripts/build_game.sh over the app pin.
 # G-12 Wind-up dash (folder, package game_wind_up_dash, id wind_up_dash; renamed from runner) and G-20 Judge bot (true_false), 2026-11-22. Must be a commit on game-factory main. Delete the line to use each app's own pin (then patch_renamed_games.py is not run and the app needs its old packages).
-271c02359f16280abf3ab459c993f38b33647695
+d422d242a9fcffbf4fdfb3a4e138c23f017bb8bb

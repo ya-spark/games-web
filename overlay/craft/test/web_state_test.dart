@@ -75,6 +75,14 @@ void main() {
     expect(WebLink.fromUri(Uri.parse('https://x/games/presto/#/play/door_runner')).segments, ['play', 'door_runner']);
   });
 
+  test('True or false became Judge bot: saved state and the old link follow', () {
+    final s = WebState.parse('{"v":1,"last":{"game":"true_false","topic":"maths/1/a"},"byGame":{"true_false":"maths/1/a"}}');
+    expect(s.lastGame, 'judge_bot');
+    expect(s.byGame, {'judge_bot': 'maths/1/a'});
+    expect(s.encode(), isNot(contains('true_false')));
+    expect(WebLink.fromUri(Uri.parse('https://x/games/scout/#/play/true_false')).segments, ['play', 'judge_bot']);
+  });
+
   test('the old link of a renamed game opens the new id', () {
     expect(WebLink.fromUri(Uri.parse('https://x/games/scout/#/play/equation_builder/maths/3/money')).segments,
         ['play', 'bridge_builder', 'maths', '3', 'money']);

@@ -3,7 +3,7 @@
 Every file in this folder is original work made for the studio.
 
 - `tile-*.svg` (the game tiles plus `tile-maths.svg` and `tile-english.svg`): drawn by hand as SVG code for the studio. No AI image generation, no Figma generation, no stock, no traced or third-party images.
-- The small icons (`<name>.svg`, for example `parcel_train.svg`) are also original studio work.
+- The small icons (`<name>.svg`, for example `parcel_train.svg`, `judge_bot.svg`) are also original studio work.
 
 All files may be used, changed and replaced by the studio. Names are stable so that later art can replace a file by name with no code change.
 
