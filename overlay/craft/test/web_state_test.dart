@@ -61,6 +61,7 @@ void main() {
     expect(s.byGame, {'parcel_train': 'maths/1/a'});
     expect(s.encode(), isNot(contains('snake')));
     expect(WebLink.fromUri(Uri.parse('https://x/games/presto/#/play/snake')).segments, ['play', 'parcel_train']);
+    expect(WebLink.fromUri(Uri.parse('https://x/games/presto/#/game/snake')).segments, ['game', 'parcel_train']);
     expect(WebLink.fromUri(Uri.parse('https://x/games/presto/#/play/snake_series')).segments, ['play', 'snake_series']);
   });
 

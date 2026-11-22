@@ -15,7 +15,7 @@ class WebLink {
     final segs = [for (final p in parts) Uri.decodeComponent(p)];
     if (segs.isNotEmpty && segs.first == 'quiz') segs[0] = 'learn'; // old links keep working
     // renamed game (owner, 2026-11-22): the old link opens the game under its new id
-    if (segs.length > 1 && segs.first == 'play') segs[1] = renamedGameIds[segs[1]] ?? segs[1];
+    if (segs.length > 1 && (segs.first == 'play' || segs.first == 'game')) segs[1] = renamedGameIds[segs[1]] ?? segs[1];
     return WebLink(segs);
   }
 
