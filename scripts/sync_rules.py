@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 # Games renamed in game-factory (kept in step with `renamedGameIds`): old id to new id.
-RENAMED = {"snake": "parcel_train"}
+RENAMED = {"snake": "parcel_train", "runner": "wind_up_dash", "true_false": "judge_bot"}
 
 STR = re.compile(r"'((?:[^'\\]|\\.)*)'")
 

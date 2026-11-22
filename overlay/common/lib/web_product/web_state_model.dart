@@ -14,6 +14,8 @@ const Map<String, String> renamedGameIds = {
   'equation_builder': 'bridge_builder',
   'series_builder': 'domino_chain',
   'snake': 'parcel_train',
+  'runner': 'wind_up_dash',
+  'true_false': 'judge_bot',
 };
 
 enum TopicStatus { fresh, practising, known }

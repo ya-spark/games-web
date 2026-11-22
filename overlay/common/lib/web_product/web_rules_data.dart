@@ -102,14 +102,14 @@ const Map<String, GameRules> webRulesData = {
     'Watch the edge of the block, not the middle.',
     'The blocks speed up as the tower grows.',
   ]),
-  'runner': GameRules('Runner', [
-    'Tap anywhere on the track, or press Jump, to jump. You run by yourself and get faster.',
-    'Jump over the gaps in the ground and over the blocks.',
-    'The game ends when you hit a block or fall into a gap. The distance you run is your score.',
+  'wind_up_dash': GameRules('Wind-up dash', [
+    'Space or tap to jump. The toy car rolls by itself: hop over bricks and do not fall in gaps.',
+    'Pick up the paper stars. Ten stars wind the spring, and a full spring bounces you off one brick.',
+    'Courses have flags: a crash puts you back at the last flag for free. Reach the flag at the end for stars.',
   ], [
-    'Time the jump so the top of the arc is over the middle of the obstacle.',
-    'There is no double jump.',
-    'Wait for the right moment instead of jumping early.',
+    'Jump a little before the brick, not at the last moment.',
+    'Pick up most of the stars on a course for 2 or 3 stars.',
+    'P or Esc pauses.',
   ]),
   'quick_quiz': GameRules('Quick quiz', [
     'Answer the questions one by one.',
@@ -148,12 +148,14 @@ const Map<String, GameRules> webRulesData = {
     'Say the word to yourself as you build it.',
     'Older levels build the word and press Check.',
   ]),
-  'true_false': GameRules('True or false', [
-    'Read each statement, then choose True or False.',
-    'After each answer you often see why.',
+  'judge_bot': GameRules('Judge bot', [
+    'Judge bot reads a ticket. Is it true or false? Press TRUE (T) or FALSE (F), or tap a lamp.',
+    'The stamp shows the right verdict and the bot tells you why. Press Next (Enter or Space) to go on.',
+    'Older levels have a clock on the bot\'s eye, and a right answer with no explanation moves on by itself.',
   ], [
-    'Read the whole statement before you answer.',
+    'Read the whole ticket before you judge it.',
     'Look for words like always, never and only.',
+    'P or Esc pauses. Space never pauses.',
   ]),
   'cloze_fix': GameRules('Cloze and grammar fix', [
     'Choose the word that fills the gap, or the corrected sentence.',

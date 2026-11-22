@@ -4,7 +4,7 @@
     python3 scripts/patch_renamed_games.py <app copy>
 
 Owner rule (2026-11-22): a game's folder, package and id are its name. equation_builder became bridge_builder and
-series_builder became domino_chain and snake became parcel_train in game-factory. The apps are paused and keep pinning an older game-factory commit
+series_builder became domino_chain and snake became parcel_train and runner became wind_up_dash and true_false became judge_bot in game-factory. The apps are paused and keep pinning an older game-factory commit
 that still has the old packages; the web builds use the current game-factory (factory.ref), where only the new
 packages exist. So build_game.sh runs this on the copy, right after copying the app and BEFORE the overlay (the overlay
 itself mentions the old ids on purpose, to migrate saved data): for each renamed game it rewrites the pubspec dependency
@@ -52,6 +52,45 @@ GAMES = [
         "registry": "package:game_parcel_train/parcel_train.dart",
         "art": "site/art/parcel_train.svg",
         "art_id": "parcel_train",
+    },
+    {
+        "label": "runner -> wind_up_dash",
+        "old_pkg": "game_runner",
+        "old_path": "games/runner",
+        "new_pkg": "game_wind_up_dash",
+        "new_path": "games/wind_up_dash",
+        "regex": True,
+        # word boundaries keep game_door_runner and its classes (another game) untouched
+        "renames": [
+            (r"game_runner\b", "game_wind_up_dash"),
+            (r"games/runner\b", "games/wind_up_dash"),
+            (r"\brunner\.dart\b", "wind_up_dash.dart"),
+            (r"(['\"])runner\1", r"\1wind_up_dash\1"),
+            (r"'Runner'", "'Wind-up dash'"),
+            (r"\bRunnerScreen\b", "WindUpDashScreen"),
+            (r"\brunnerStarScores\b", "dashStarScores"),
+        ],
+        "registry": "package:game_wind_up_dash/wind_up_dash.dart",
+        "art": "site/art/wind_up_dash.svg",
+        "art_id": "wind_up_dash",
+    },
+    {
+        "label": "true_false -> judge_bot",
+        "old_pkg": "game_true_false",
+        "old_path": "games/true_false",
+        "new_pkg": "game_judge_bot",
+        "new_path": "games/judge_bot",
+        "regex": True,
+        "renames": [
+            (r"game_true_false\b", "game_judge_bot"),
+            (r"games/true_false\b", "games/judge_bot"),
+            (r"\btrue_false\.dart\b", "judge_bot.dart"),
+            (r"\btrueFalseGame\b", "judgeBotGame"),
+            (r"(['\"])true_false\1", r"\1judge_bot\1"),
+        ],
+        "registry": "package:game_judge_bot/judge_bot.dart",
+        "art": "site/art/judge_bot.svg",
+        "art_id": "judge_bot",
     },
     {
         "label": "series_builder -> domino_chain",

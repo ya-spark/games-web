@@ -65,6 +65,16 @@ void main() {
     expect(WebLink.fromUri(Uri.parse('https://x/games/presto/#/play/snake_series')).segments, ['play', 'snake_series']);
   });
 
+  test('Runner became Wind-up dash: saved state and the old link follow', () {
+    final s = WebState.parse('{"v":1,"last":{"game":"runner","topic":"maths/1/a"},"byGame":{"runner":"maths/1/a"}}');
+    expect(s.lastGame, 'wind_up_dash');
+    expect(s.byGame, {'wind_up_dash': 'maths/1/a'});
+    expect(s.encode(), isNot(contains('runner')));
+    expect(WebLink.fromUri(Uri.parse('https://x/games/presto/#/play/runner')).segments, ['play', 'wind_up_dash']);
+    expect(WebLink.fromUri(Uri.parse('https://x/games/presto/#/game/runner')).segments, ['game', 'wind_up_dash']);
+    expect(WebLink.fromUri(Uri.parse('https://x/games/presto/#/play/door_runner')).segments, ['play', 'door_runner']);
+  });
+
   test('the old link of a renamed game opens the new id', () {
     expect(WebLink.fromUri(Uri.parse('https://x/games/scout/#/play/equation_builder/maths/3/money')).segments,
         ['play', 'bridge_builder', 'maths', '3', 'money']);
