@@ -12,10 +12,10 @@ import 'package:APP_PKG/web_product/craft_shell.dart';
 import 'package:APP_PKG/web_product/web_state_model.dart';
 import 'helpers/fake_services.dart';
 
-PoolItem _item(String id, String subject, int year, String topic) => PoolItem(
+PoolItem _item(String id, String subject, int year, String topic, [String type = 'mcq']) => PoolItem(
       item: ContentItem({
         'id': id,
-        'type': 'mcq',
+        'type': type,
         'seq': 1,
         'difficulty': 1,
         'explanation': 'e',
@@ -38,8 +38,15 @@ maths:
     gamma: Gamma topic
 ''';
 
+const _extraYaml = '''
+english:
+  3:
+    zeta: Zeta topic
+''';
+
 class _Harness extends StatefulWidget {
-  const _Harness({required this.services, required this.state, this.year, this.launch = WebLinkLaunch.none});
+  const _Harness({required this.services, required this.state, this.year, this.launch = WebLinkLaunch.none, this.extra = const []});
+  final List<PoolItem> extra;
   final WebLinkLaunch launch;
   final Services services;
   final WebState state;
@@ -56,6 +63,7 @@ class _HarnessState extends State<_Harness> {
       for (final t in ['alpha', 'beta'])
         for (var i = 0; i < 6; i++) _item('$t$i', 'maths', 3, t),
       for (var i = 0; i < 6; i++) _item('g$i', 'maths', 4, 'gamma'),
+      ...widget.extra,
     ];
     return ServicesScope(
       services: widget.services,
@@ -64,7 +72,7 @@ class _HarnessState extends State<_Harness> {
           services: widget.services,
           packs: const [],
           open: open,
-          topics: Topics.parse(_yaml),
+          topics: Topics.parse(_yaml + (widget.extra.isEmpty ? '' : _extraYaml)),
           years: const [3, 4],
           year: year,
           onYear: (y) => setState(() => year = y),
@@ -76,12 +84,13 @@ class _HarnessState extends State<_Harness> {
   }
 }
 
-Future<void> _pump(WidgetTester tester, WebState state, {int? year, WebLinkLaunch launch = WebLinkLaunch.none}) async {
+Future<void> _pump(WidgetTester tester, WebState state,
+    {int? year, WebLinkLaunch launch = WebLinkLaunch.none, List<PoolItem> extra = const []}) async {
   tester.view.physicalSize = const Size(900, 1400);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   final s = await buildFakeServices(contentEnabled: true);
-  await tester.pumpWidget(_Harness(services: s, state: state, year: year, launch: launch));
+  await tester.pumpWidget(_Harness(services: s, state: state, year: year, launch: launch, extra: extra));
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 100));
 }
@@ -154,6 +163,62 @@ void main() {
     expect(find.byKey(const Key('web.note')), findsNothing);
     expect(find.byType(Card), findsWidgets); // the proposals are cards with art, like the home page
     expect(state.statusOf('maths/3/alpha'), TopicStatus.fresh); // nothing was played
+  });
+
+  testWidgets('the unsupported screen shows only the games when the game plays no topic of the year', (tester) async {
+    // A game that plays only types the test topics lack cannot run alpha; it plays no topic here, so only the games show.
+    final blocked = appGames.entries.firstWhere((e) =>
+        e.game.access != GameAccess.coins &&
+        e.game.id != quickQuizGame.id &&
+        !e.game.itemTypes.contains(ItemType.mcq));
+    final state = WebState();
+    await _pump(tester, state,
+        year: 3, launch: WebLinkLaunch(gameId: blocked.game.id, subject: 'maths', year: 3, topic: 'alpha'));
+    expect(find.textContaining('has no questions for Alpha topic yet'), findsOneWidget);
+    expect(find.byKey(const Key('web.supported.title')), findsNothing);
+    expect(find.byKey(const Key('web.supported.list')), findsNothing);
+  });
+
+  testWidgets('the unsupported screen lists the playable topics of this year only, in order, and a tap opens the game on it',
+      (tester) async {
+    final blocked = appGames.entries.firstWhere((e) =>
+        e.game.access != GameAccess.coins &&
+        e.game.id != quickQuizGame.id &&
+        !e.game.itemTypes.contains(ItemType.mcq));
+    final type = blocked.game.itemTypes.first.name;
+    // The game plays items of its own type: English (listed first on purpose) and a Maths topic of Year 3, and a Year 4 one.
+    final extra = [
+      for (var i = 0; i < 40; i++) _item('z$i', 'english', 3, 'zeta', type),
+      for (var i = 0; i < 40; i++) _item('d$i', 'maths', 3, 'delta', type),
+      for (var i = 0; i < 40; i++) _item('y$i', 'maths', 4, 'gamma', type),
+    ];
+    final state = WebState();
+    await _pump(tester, state,
+        year: 3,
+        launch: WebLinkLaunch(gameId: blocked.game.id, subject: 'maths', year: 3, topic: 'alpha'),
+        extra: extra);
+    expect(find.textContaining('has no questions for Alpha topic yet'), findsOneWidget);
+    expect(find.byKey(const Key('web.supported.title')), findsOneWidget);
+    expect(find.text('This game plays these topics'), findsOneWidget);
+    final delta = find.byKey(const Key('web.supported.maths.delta'));
+    final zeta = find.byKey(const Key('web.supported.english.zeta'));
+    expect(delta, findsOneWidget);
+    expect(zeta, findsOneWidget);
+    expect(find.byKey(const Key('web.supported.maths.alpha')), findsNothing); // the unsupported topic itself
+    expect(find.byKey(const Key('web.supported.maths.beta')), findsNothing); // no items of the game's type
+    expect(find.byKey(const Key('web.supported.maths.gamma')), findsNothing); // another year
+    expect(tester.getTopLeft(delta).dy, lessThan(tester.getTopLeft(zeta).dy)); // Maths then English
+    expect(find.text('Maths'), findsOneWidget);
+    expect(find.text('English'), findsOneWidget);
+    // The rows are ListTiles (focusable, Enter and Space activate them, visible focus); a tap opens this game on the topic.
+    await tester.ensureVisible(delta);
+    await tester.tap(delta);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    tester.takeException(); // the game opens on the bare test items (no real fields), so its own build may complain
+    expect(find.byKey(const Key('web.supported.title')), findsNothing);
+    expect(state.statusOf('maths/3/delta'), TopicStatus.practising);
+    expect(state.byGame[blocked.game.id], isNotNull);
   });
 
   testWidgets('the Game button shows "Game: <name>" for the game on screen', (tester) async {

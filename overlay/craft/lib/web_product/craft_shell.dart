@@ -57,7 +57,10 @@ enum _Screen { playing, needYear, allDone, ended, empty, unsupported }
 
 /// A game that has no questions for the chosen topic, and the games that do (proposed instead; never the Quick quiz).
 class _Unsupported {
-  const _Unsupported(this.game, this.topic, this.mixed, this.alternatives);
+  const _Unsupported(this.game, this.topic, this.mixed, this.alternatives, [this.playable = const <TopicRef>[]]);
+
+  /// The topics of the same year this game can run (teaching order, Maths then English).
+  final List<TopicRef> playable;
   final MiniGame game;
   final TopicRef? topic;
   final String? mixed;
@@ -157,6 +160,8 @@ class _CraftShellState extends State<CraftShell> {
     return out;
   }
 
+  String _subjectLabel(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+
   /// A topic id that topics.yaml does not name, shown as words: comparing_size -> Comparing size.
   String _pretty(String id) {
     final s = id.replaceAll('_', ' ');
@@ -231,10 +236,15 @@ class _CraftShellState extends State<CraftShell> {
               _session(e.game, subject, year, t?.id) != null)
             e.game,
       ];
+      // And the topics of this year the game does play: the same check, applied per topic.
+      final playable = [
+        for (final o in topics)
+          if (o.key != t?.key && _session(game, o.subject, year, o.id) != null) o,
+      ];
       setState(() {
         _gameId = gameId;
         _screen = _Screen.unsupported;
-        _unsupported = _Unsupported(game, t, mixed, alts);
+        _unsupported = _Unsupported(game, t, mixed, alts, playable);
       });
       return;
     }
@@ -464,17 +474,56 @@ class _CraftShellState extends State<CraftShell> {
         return _Centered(
           title: '${u.game.title} has no questions for $topicName yet',
           text: u.alternatives.isEmpty ? 'Try another topic, or use Learn.' : 'Try one of these games instead:',
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            alignment: WrapAlignment.center,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              for (final g in u.alternatives)
-                _GameCard(
-                  key: Key('web.alt.${g.id}'),
-                  game: g,
-                  onTap: () => _begin(g.id, topic: u.topic, mixed: u.mixed),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.center,
+                children: [
+                  for (final g in u.alternatives)
+                    _GameCard(
+                      key: Key('web.alt.${g.id}'),
+                      game: g,
+                      onTap: () => _begin(g.id, topic: u.topic, mixed: u.mixed),
+                    ),
+                ],
+              ),
+              if (u.playable.isNotEmpty) ...[
+                const SizedBox(height: 24),
+                Semantics(
+                  header: true,
+                  child: Text(
+                    'This game plays these topics',
+                    key: const Key('web.supported.title'),
+                    style: Theme.of(context).textTheme.titleMedium,
+                    textAlign: TextAlign.center,
+                  ),
                 ),
+                const SizedBox(height: 8),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Column(
+                    key: const Key('web.supported.list'),
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final o in u.playable)
+                        Card(
+                          margin: const EdgeInsets.symmetric(vertical: 3),
+                          clipBehavior: Clip.antiAlias,
+                          child: ListTile(
+                            key: Key('web.supported.${o.subject}.${o.id}'),
+                            title: Text(o.title),
+                            subtitle: Text(_subjectLabel(o.subject)),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () => _begin(u.game.id, topic: o),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         );

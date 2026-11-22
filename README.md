@@ -52,7 +52,7 @@ year and the first topic not marked known.
 
 Every Craft game plays every year and topic: `build_game.sh` runs `scripts/merge_craft_content.py`, which copies the free
 packs and topics of the other Craft apps into the temporary copy of the app (nothing is committed here; the checkouts are
-never changed). A game with too few questions for a topic says so and proposes the games that can run it (never the Quick quiz).
+never changed). A game with too few questions for a topic says so and proposes the games that can run it (never the Quick quiz). Below the games it adds "This game plays these topics": the same year's topics this game can run (its own `canPlay` check per topic over the pool; Maths then English, teaching order), each a keyboard-focusable link that opens this game on that topic; none = only the games (U2 item 3).
 
 Inside a game the thin bar (`overlay/common/.../web_rules.dart`, `web_bar.dart`) has Year, Game, Topic, "I know this", Learn
 and Rules. A topic is new, practising or known; known applies in every game, is reached by a 5-question check (4 right to
