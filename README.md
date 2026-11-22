@@ -14,6 +14,12 @@ known or being practised, last game), plus the theme and one rules-seen flag per
   overlay on top, and builds the web bundle into `dist/<slug>/` (not committed). The app checkout
   is not modified.
 
+- Loading screen: the app's `web/index.html` shows its icon and "<family> Games" in a `#loading` block until
+  `flutter-first-frame`. `build_game.sh` runs `scripts/loading_logo.py` on the built `index.html` (next to the version badge):
+  the block's content becomes the centred Active Mind Craft logo (`site/art/brand/logo-vertical-dark.svg`, inline, dark
+  variant because the loading page is always `#101820`), the sliding bar and "Getting ready...". The removal script and the
+  page `<title>` (the game name) are kept. A page with no `#loading` block gets one (warning). The app checkout is not changed.
+
 ## Running it on your laptop
 
 Needs Flutter (the version in game-factory's `.flutter-version`), Python 3, and the app checkouts. Inside the

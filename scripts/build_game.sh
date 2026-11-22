@@ -81,6 +81,11 @@ assert '</head>' in s
 open(p, 'w').write(s.replace('</head>', tag + '</head>', 1))
 PY
 fi
+# Loading screen: the app's own web/index.html shows its icon and "<family> Games" until the first frame; show the
+# Active Mind Craft logo (inline, dark variant: the loading page is always dark) with the same bar and text instead.
+# The page <title> keeps the game name. A game without a #loading block gets one (warning). Never fails the build.
+python3 "$ROOT/scripts/loading_logo.py" "$TMP/app/build/web/index.html" "$ROOT/site/art/brand/logo-vertical-dark.svg" \
+  || echo "WARNING: could not set the logo on the loading screen of $SLUG; the app's own loading block stays"
 # build-info.json: which commits this build came from (served at <base>/build-info.json and shown on the /games/ index).
 printf '{"slug":"%s","app":"%s","appCommit":"%s","gamesCommit":"%s","gamesWebCommit":"%s","builtAt":"%s"}\n' \
   "$SLUG" "$REPO" "$APP_SHA" "$FACTORY_SHA" "$WEB_SHA" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > build/web/build-info.json
