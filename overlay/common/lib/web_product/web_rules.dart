@@ -50,10 +50,12 @@ Future<void> showWebRules(BuildContext context, String gameId) {
         ),
       ),
       actions: [
+        // Autofocus: Enter or Space presses it, Esc closes the dialog too (B-16, B-09).
         FilledButton(
           key: const Key('web.rules.gotIt'),
+          autofocus: true,
           onPressed: () => Navigator.of(ctx).pop(),
-          child: const Text('Got it'),
+          child: const Text('Got it (Enter / Esc)'),
         ),
       ],
     ),
